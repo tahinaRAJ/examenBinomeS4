@@ -7,12 +7,12 @@ use App\Models\MouvementModel;
 
 class ClientController extends BaseController
 {
-    public function index(): string
-    {
-        return view('clients/index', [
-            'clients' => model(CompteModel::class)->findAll(),
-        ]);
-    }
+    // public function index(): string
+    // {
+    //     return view('clients/index', [
+    //         'clients' => model(CompteModel::class)->findAll(),
+    //     ]);
+    // }
 
     public function profile()
     {
