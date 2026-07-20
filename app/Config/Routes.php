@@ -7,7 +7,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 // Dashboard
-$routes->get('/', 'Dashboard::index');
+$routes->get('/dashboard', 'Dashboard::index');
 $routes->get('dashboard/gains/(:segment)', 'Dashboard::gains/$1');
 
 // CRUD des préfixes
@@ -35,7 +35,7 @@ $routes->post('comptes/(:num)/toggle', 'Comptes::toggle/$1');
 
 
 // Authentification 
-$routes->get('login', 'AuthController::showLoginForm');
+$routes->get('/', 'AuthController::showLoginForm');
 $routes->post('login', 'AuthController::login');
 $routes->post('logout', 'AuthController::logout');
 
