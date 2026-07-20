@@ -245,6 +245,46 @@
     max-width: 280px;
 }
 
+/* Destinataires dynamiques du transfert multiple */
+.destinataires-entete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.destinataires-entete label {
+    margin-bottom: 0;
+}
+
+.destinataires-liste {
+    display: grid;
+    gap: 10px;
+}
+
+.destinataire-ligne {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.destinataire-ligne input {
+    flex: 1;
+}
+
+.destinataire-ligne .btn {
+    flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+    .destinataires-entete,
+    .destinataire-ligne {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
 /* ==================================================================
    Aperçu en direct des frais (sous les formulaires d'opération)
    ================================================================== */

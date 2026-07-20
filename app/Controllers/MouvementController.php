@@ -44,9 +44,9 @@ class MouvementController extends BaseController
         $mouvements = model(MouvementModel::class);
 
         $resultat = match ($operation) {
-            'transfert' => $mouvements->simulerTransfert(
+            'transfert' => $mouvements->simulerTransfertMultiple(
                 $client['id'],
-                trim((string) $this->request->getPost('numeroReceiver')),
+                $this->numerosDestinataires(),
                 $montant,
                 $this->request->getPost('retraitInclus') !== null
             ),
@@ -135,13 +135,34 @@ class MouvementController extends BaseController
             return $client;
         }
 
-        $montant        = (float) $this->request->getPost('montant');
-        $numeroReceiver = trim((string) $this->request->getPost('numeroReceiver'));
-        $retraitInclus  = $this->request->getPost('retraitInclus') !== null;
-        $resultat       = model(MouvementModel::class)->transferer($client['id'], $numeroReceiver, $montant, $retraitInclus
+        $montant       = (float) $this->request->getPost('montant');
+        $retraitInclus = $this->request->getPost('retraitInclus') !== null;
+        $resultat      = model(MouvementModel::class)->transfererMultiple(
+            $client['id'],
+            $this->numerosDestinataires(),
+            $montant,
+            $retraitInclus
         );
 
         return redirect()->to('/client/transfert')
             ->with($resultat['success'] ? 'success' : 'erreur', $resultat['message']);
+    }
+
+    /**
+     * Normalise les champs dynamiques du formulaire de transfert.
+     */
+    private function numerosDestinataires(): array
+    {
+        $numeros = $this->request->getPost('numerosReceiver');
+
+        if (! is_array($numeros)) {
+            $ancienChamp = $this->request->getPost('numeroReceiver');
+            $numeros = $ancienChamp === null ? [] : [$ancienChamp];
+        }
+
+        return array_values(array_map(
+            static fn ($numero): string => trim((string) $numero),
+            $numeros
+        ));
     }
 }

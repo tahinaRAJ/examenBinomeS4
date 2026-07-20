@@ -318,33 +318,39 @@ compte qui s'applique, puisque c'est lui qui est débité. Un retrait de
 Le frais calculé est **copié dans `mouvement.frais`** : c'est le snapshot
 figé. Si la grille change demain, ce retrait gardera le frais d'aujourd'hui.
 
-### 3.5 `transferer()`
+### 3.5 `transfererMultiple()`
 
 ```php
-public function transferer(int $idSender, string $numeroReceiver, float $montant): array
+public function transfererMultiple(
+    int $idSender,
+    array $numerosReceivers,
+    float $montantTotal,
+    bool $retraitInclus = false
+): array
 ```
 
-Le cas le plus complet. Quatre validations :
-
-1. montant positif ;
-2. émetteur existant ;
-3. **destinataire trouvé par son numéro** (`where('numero', $numeroReceiver)`) —
-   c'est le client qui saisit un numéro, pas un id ;
-4. **pas de transfert vers soi-même** (`$receiver['id'] === $idSender`) ;
-5. solde suffisant pour `montant + frais`.
-
-Puis, dans une seule transaction :
+Le montant saisi est un **montant total à répartir**. Le Model calcule d'abord :
 
 ```php
-$this->insert([...]);                                              // le mouvement
-$comptes->update($idSender,      ['solde' => $sender['solde'] - $total]);   // -montant -frais
-$comptes->update($receiver['id'],['solde' => $receiver['solde'] + $montant]); // +montant
+$montantPart = $montantTotal / count($numerosReceivers);
 ```
 
-À noter : le destinataire reçoit **le montant exact**, les frais sont
-supportés **uniquement par l'émetteur**. La différence (`$frais`) est
-justement le **gain de l'opérateur**, celui qu'on totalise dans le dashboard
-de la partie 1.
+Les frais ne sont jamais calculés sur `$montantTotal`. Pour chaque
+numéro, le Model applique la grille à `$montantPart`, calcule éventuellement
+la commission inter-opérateurs et les frais de retrait offerts, puis additionne
+les résultats. Avec 30 000 Ar et 3 destinataires, chaque destinataire reçoit
+une part de 10 000 Ar et le frais de la tranche 10 000 Ar est appliqué trois
+fois.
+
+Les validations portent sur le montant, l'existence et l'activation de tous
+les comptes, les doublons, le transfert vers soi-même et le solde nécessaire
+pour couvrir la totalité des parts, frais et commissions.
+
+Toutes les insertions de mouvements, tous les crédits destinataires et le
+débit unique de l'émetteur sont exécutés dans **une seule transaction**. Une
+erreur sur un seul numéro annule donc le transfert complet. La méthode
+`transferer()` reste disponible et délègue simplement à
+`transfererMultiple()` avec un tableau contenant un seul numéro.
 
 ### Quel opérateur tarife un transfert ?
 

@@ -250,3 +250,13 @@
       exécute (3 cas testés, total débité et montant reçu identiques au
       centime), 16 pages en 200, endpoints conformes, syntaxe PHP et JS
       valides — **7 min**
+
+## Transfert vers plusieurs destinataires
+
+- [x] Formulaire dynamique : ajout et retrait de plusieurs numéros
+- [x] Répartition du montant total à parts égales entre les destinataires
+- [x] Calcul des frais et commissions sur chaque part, puis addition des totaux
+- [x] Aperçu AJAX détaillé : part individuelle, montant reçu par numéro, frais
+      d'envoi totaux, commissions et total débité
+- [x] Transaction atomique : un numéro invalide annule tout le transfert
+- [x] Contrôle des numéros vides, dupliqués, inactifs et du compte émetteur

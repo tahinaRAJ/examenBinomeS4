@@ -15,17 +15,26 @@
             <?= csrf_field() ?>
 
             <div class="form-group">
-                <label for="numeroReceiver">Numéro du destinataire</label>
-                <input type="text" id="numeroReceiver" name="numeroReceiver"
-                       placeholder="Ex. 0344455667" required autofocus
-                       autocomplete="off" inputmode="numeric">
-                <p class="form-aide">L'opérateur est reconnu automatiquement d'après le préfixe.</p>
+                <label for="montant">Montant total à répartir (Ar)</label>
+                <input type="number" id="montant" name="montant" min="1" step="0.01"
+                       placeholder="Ex. 30000" required autofocus inputmode="decimal">
+                <p class="form-aide">Ce montant sera divisé à parts égales entre tous les destinataires.</p>
             </div>
 
             <div class="form-group">
-                <label for="montant">Montant à envoyer (Ar)</label>
-                <input type="number" id="montant" name="montant" min="1" step="1"
-                       placeholder="Ex. 10000" required inputmode="numeric">
+                <div class="destinataires-entete">
+                    <label>Numéros des destinataires</label>
+                    <button type="button" class="btn btn-sm" id="ajouterDestinataire">+ Ajouter un numéro</button>
+                </div>
+                <div id="listeDestinataires" class="destinataires-liste">
+                    <div class="destinataire-ligne">
+                        <input type="text" name="numerosReceiver[]"
+                               placeholder="Ex. 0344455667" required
+                               autocomplete="off" inputmode="numeric"
+                               aria-label="Numéro du destinataire 1">
+                    </div>
+                </div>
+                <p class="form-aide">Chaque numéro doit correspondre à un compte existant et ne peut apparaître qu'une fois.</p>
             </div>
 
             <div class="form-group">
@@ -34,8 +43,8 @@
                     <span class="form-check-texte">
                         Inclure les frais de retrait
                         <span class="form-check-aide">
-                            Vous payez en plus le frais de retrait du destinataire : il recevra
-                            de quoi retirer la totalité du montant.
+                            Vous payez en plus le frais de retrait de chaque destinataire : chacun
+                            recevra de quoi retirer entièrement sa part.
                         </span>
                     </span>
                 </label>
@@ -60,11 +69,10 @@
 
         <div class="info-bloc">
             <strong>Comment sont calculés les frais ?</strong><br>
-            Le <strong>frais d'envoi</strong> dépend de votre opérateur et du montant.<br>
-            Si le destinataire est chez un <strong>autre opérateur</strong>, une
-            <strong>commission</strong> en pourcentage s'ajoute — elle revient à l'opérateur
-            qui reçoit l'argent.<br>
-            Le destinataire reçoit toujours le montant exact que vous avez saisi.
+            Le montant total est d'abord <strong>divisé par le nombre de destinataires</strong>.<br>
+            Le <strong>frais d'envoi</strong> est ensuite calculé sur chaque part, jamais sur
+            le montant total, puis tous les frais sont additionnés.<br>
+            Une commission peut aussi s'ajouter séparément pour chaque transfert vers un autre opérateur.
         </div>
     </div>
 </div>

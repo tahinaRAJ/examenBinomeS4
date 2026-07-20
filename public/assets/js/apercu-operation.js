@@ -29,6 +29,12 @@
         return arrondi.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' Ar';
     }
 
+    function echapper(texte) {
+        return String(texte).replace(/[&<>'"]/g, function (caractere) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[caractere];
+        });
+    }
+
     function ligne(libelle, valeur, options) {
         options = options || {};
         var classes = ['apercu-ligne'];
@@ -53,26 +59,29 @@
         var html = '';
 
         if (operation === 'transfert') {
-            html += ligne('Montant envoyé', formaterAriary(d.montant));
+            html += ligne('Montant total à répartir', formaterAriary(d.montant));
+            html += ligne('Nombre de destinataires', String(d.nombreDestinataires));
+            html += ligne('<strong>Part par destinataire</strong>',
+                          '<strong>' + formaterAriary(d.montantParDestinataire) + '</strong>',
+                          { fort: true });
 
-            if (d.fraisRetrait > 0) {
-                html += ligne('Frais de retrait offert', '+ ' + formaterAriary(d.fraisRetrait), {
-                    note: 'tarif ' + d.operateurRecu
+            (d.destinataires || []).forEach(function (destination) {
+                var identite = echapper(destination.nom) + ' (' + echapper(destination.numero) + ') reçoit';
+                html += ligne(identite, formaterAriary(destination.montantRecu), {
+                    note: echapper(destination.operateur), couleur: 'amount-gain'
                 });
-            }
-
-            html += ligne('<strong>' + d.nomReceiver + ' reçoit</strong>',
-                          '<strong>' + formaterAriary(d.montantRecu) + '</strong>',
-                          { fort: true, couleur: 'amount-gain' });
-
-            html += ligne('Frais d\'envoi', '+ ' + formaterAriary(d.frais), {
-                note: 'tarif ' + d.operateurSender
             });
 
-            if (d.interOperateurs) {
-                html += ligne('Commission inter-opérateurs', '+ ' + formaterAriary(d.commission), {
-                    note: d.operateurRecu + ' · ' + d.tauxCommission + ' %'
-                });
+            if (d.fraisRetrait > 0) {
+                html += ligne('Total des frais de retrait offerts', '+ ' + formaterAriary(d.fraisRetrait));
+            }
+
+            html += ligne('Total des frais d\'envoi', '+ ' + formaterAriary(d.frais), {
+                note: 'calculés séparément sur chaque part · tarif ' + echapper(d.operateurSender)
+            });
+
+            if (d.commission > 0) {
+                html += ligne('Total des commissions inter-opérateurs', '+ ' + formaterAriary(d.commission));
             }
 
             html += ligne('<strong>Total débité</strong>',
@@ -143,5 +152,43 @@
     formulaire.addEventListener('input', planifier);
     formulaire.addEventListener('change', planifier);
 
+    var boutonAjouter = document.getElementById('ajouterDestinataire');
+    var listeDestinataires = document.getElementById('listeDestinataires');
+
+    function actualiserBoutonsSuppression() {
+        if (!listeDestinataires) { return; }
+        var lignes = listeDestinataires.querySelectorAll('.destinataire-ligne');
+        lignes.forEach(function (ligne) {
+            var bouton = ligne.querySelector('.supprimer-destinataire');
+            if (bouton) { bouton.disabled = lignes.length <= 1; }
+        });
+    }
+
+    if (boutonAjouter && listeDestinataires) {
+        boutonAjouter.addEventListener('click', function () {
+            var numeroLigne = listeDestinataires.children.length + 1;
+            var ligne = document.createElement('div');
+            ligne.className = 'destinataire-ligne';
+            ligne.innerHTML = '<input type="text" name="numerosReceiver[]" required '
+                + 'placeholder="Ex. 0344455667" autocomplete="off" inputmode="numeric" '
+                + 'aria-label="Numéro du destinataire ' + numeroLigne + '">'
+                + '<button type="button" class="btn btn-sm btn-danger supprimer-destinataire" '
+                + 'aria-label="Supprimer ce destinataire">Retirer</button>';
+            listeDestinataires.appendChild(ligne);
+            ligne.querySelector('input').focus();
+            actualiserBoutonsSuppression();
+            planifier();
+        });
+
+        listeDestinataires.addEventListener('click', function (evenement) {
+            var bouton = evenement.target.closest('.supprimer-destinataire');
+            if (!bouton) { return; }
+            bouton.closest('.destinataire-ligne').remove();
+            actualiserBoutonsSuppression();
+            planifier();
+        });
+    }
+
+    actualiserBoutonsSuppression();
     afficherMessage('Saisissez un montant pour voir le détail des frais.');
 })();

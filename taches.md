@@ -49,20 +49,50 @@
 - [x] logique de mouvement
 - [x] création du controller
 - [x] création des fonctions
-         - [x] creation de deposer()
-         - [x] creation de retirer()
-         - [x] creation de transferer()
+    - [x] creation de deposer()
+    - [x] creation de retirer()
+    - [x] creation de transferer()
+    - [x] creation de transfererMultiple()
+- [x] transfert vers plusieurs numéros
+    - [x] ajout et suppression dynamique de destinataires
+    - [x] division du montant total par le nombre de destinataires
+    - [x] calcul des frais sur chaque montant divisé
+    - [x] addition des frais et commissions de tous les transferts
+    - [x] validation des numéros vides, dupliqués, inactifs et du compte émetteur
+    - [x] transaction atomique (un numéro invalide annule tous les transferts)
+- [x] option frais de retrait inclus
+    - [x] calcul selon la grille de l'opérateur de chaque destinataire
+    - [x] ajout du frais de retrait à la part reçue par chaque destinataire
+    - [x] frais d'envoi toujours calculé sur la part divisée
 - [x] Information Client 
     - [x] Profil
     - [x] création des fonctions
-         - [x] creation de getNom()
-         - [x] creation de getSolde()
-         - [x] creation de getNum()
+        - [x] creation de getNom()
+        - [x] creation de getSolde()
+        - [x] creation de getNum()
     - [x] historique
+- [x] aperçu en direct des opérations (AJAX)
+    - [x] simulation du dépôt
+    - [x] simulation du retrait
+    - [x] simulation du transfert simple et multiple
+    - [x] affichage de la part individuelle, des frais totaux, des commissions et du total débité
 
 ### Vues
 - [x] Vues opérateur (préfixes, tarifs, comptes, dashboard)
 - [x] Vues client (connexion, profil, dépôt, retrait, transfert, historique)
+- [x] Formulaire de transfert avec plusieurs numéros
+- [x] Interface de l'option « frais de retrait inclus »
+
+### JavaScript
+- [x] `public/assets/js/apercu-operation.js`
+    - [x] aperçu AJAX des frais sans écriture en base
+    - [x] ajout et retrait dynamique des numéros destinataires
+    - [x] affichage du détail d'un transfert multiple
+    - [x] anti-rebond et protection contre les réponses AJAX hors ordre
+- [x] `public/assets/js/simulateur-tarif.js`
+    - [x] simulation d'un tarif par opérateur, type et montant
+- [x] `public/assets/js/templatemo-crypto-script.js`
+    - [x] interactions générales du template et changement de thème
 
 ### Documentation (docs/documentation/)
 - [x] sqlite-setup.md — installation et configuration SQLite
