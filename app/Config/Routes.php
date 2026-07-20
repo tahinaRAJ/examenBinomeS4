@@ -34,8 +34,12 @@ $routes->post('comptes/(:num)', 'Comptes::update/$1');
 $routes->post('comptes/(:num)/toggle', 'Comptes::toggle/$1');
 
 
-// Authentification 
+// Authentification
+// La racine ET /login affichent le formulaire de connexion : les controllers
+// redirigent vers '/login' quand la session est absente, cette route est donc
+// indispensable (sinon ces redirections tombent sur un 404).
 $routes->get('/', 'AuthController::showLoginForm');
+$routes->get('login', 'AuthController::showLoginForm');
 $routes->post('login', 'AuthController::login');
 $routes->post('logout', 'AuthController::logout');
 

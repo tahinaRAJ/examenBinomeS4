@@ -41,7 +41,7 @@
 
             <nav class="nav-section">
                 <div class="nav-label">Menu principal</div>
-                <a href="<?= site_url('/') ?>" class="nav-item <?= url_is('/') || url_is('dashboard*') ? 'active' : '' ?>">
+                <a href="<?= site_url('dashboard') ?>" class="nav-item <?= url_is('dashboard*') ? 'active' : '' ?>">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7" rx="1"/>
                         <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -92,6 +92,15 @@
                     </div>
                     <div class="theme-switch" id="themeSwitch"></div>
                 </div>
+                <?php // Simple lien : l'espace opérateur n'a pas de session à détruire ?>
+                <a href="<?= site_url('login') ?>" class="logout-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Quitter l'espace opérateur
+                </a>
             </div>
         </aside>
 

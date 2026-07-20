@@ -43,7 +43,7 @@
 <div class="app-card">
     <div class="card-header-row">
         <h2>Mouvements du <?= esc($jour) ?></h2>
-        <a class="btn" href="<?= site_url('/') . ($idOperateur !== null ? '?operateur=' . $idOperateur : '') ?>">← Retour au dashboard</a>
+        <a class="btn" href="<?= site_url('dashboard') . ($idOperateur !== null ? '?operateur=' . $idOperateur : '') ?>">← Retour au dashboard</a>
     </div>
     <div class="table-scroll">
         <table class="app-table">

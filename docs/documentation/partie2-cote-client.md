@@ -450,6 +450,9 @@ Le champ conserve la saisie en cas d'erreur grâce à `old()` :
 <input type="text" name="numero" value="<?= esc(old('numero')) ?>" required autofocus>
 ```
 
+C'est aussi **la page d'accueil du site** (route `/`), avec en bas un lien
+vers `site_url('dashboard')` pour basculer sur l'espace opérateur.
+
 ### 5.3 `clients/profile.php`
 
 Quatre `stat-card` (solde, numéro, statut, date d'ouverture), puis les
@@ -507,7 +510,8 @@ ce qui colore le montant en rouge ou vert et choisit la bonne contrepartie
 
 ```php
 // Authentification
-$routes->get('login',   'AuthController::showLoginForm');
+$routes->get('/',       'AuthController::showLoginForm');  // page d'accueil
+$routes->get('login',   'AuthController::showLoginForm');  // même page, URL explicite
 $routes->post('login',  'AuthController::login');
 $routes->post('logout', 'AuthController::logout');
 
@@ -530,6 +534,51 @@ le traite. C'est la convention REST, déjà utilisée en partie 1.
 `logout` est en `POST` uniquement : une action qui modifie l'état ne doit
 jamais être accessible par un simple lien `GET` (sinon n'importe quelle image
 pointant vers `/logout` déconnecterait le visiteur).
+
+### La connexion est la page d'accueil
+
+`/` affiche le formulaire de connexion : c'est le point d'entrée de
+l'application. Le dashboard opérateur, lui, est passé sur **`/dashboard`**.
+
+⚠️ **Les deux routes `/` et `/login` sont nécessaires**, et pas par confort :
+les controllers client font `redirect()->to('/login')` à **six endroits**
+(`ClientController` ×4, `MouvementController` ×2) dès que la session est
+absente. Si la route `GET login` est supprimée, toutes ces redirections
+tombent sur une **404** et l'espace client devient inaccessible.
+
+C'est exactement ce qui s'est produit : en faisant de `/` la page de
+connexion, la route `GET login` avait été retirée, ce qui a cassé :
+
+| Élément | Effet |
+|---|---|
+| `/profil`, `/historique`, les 3 opérations | 404 au lieu du formulaire de connexion |
+| Lien « Dashboard » de la sidebar opérateur | renvoyait vers le login |
+| Formulaire de filtre du dashboard | filtrer par opérateur renvoyait au login |
+| « Retour au dashboard » (page des gains) | renvoyait au login |
+| Redirection « date invalide » | renvoyait au login |
+
+**Règle à retenir :** si on change une route, il faut vérifier tous les
+`redirect()->to(...)` des controllers **et** tous les `site_url(...)` des
+vues qui la visent :
+
+```bash
+grep -rn "to('/login')" app/Controllers/
+grep -rn "site_url('/')" app/Views/
+```
+
+### Naviguer entre les deux espaces
+
+Les deux interfaces sont reliées dans les deux sens :
+
+- **Client → opérateur** : la page de connexion a un lien « accéder au
+  dashboard » en bas (`auth/login.php`), vers `site_url('dashboard')`.
+- **Opérateur → client** : la sidebar opérateur (`layout/main.php`) a un
+  bouton **« Quitter l'espace opérateur »** vers `site_url('login')`.
+
+Différence importante avec la déconnexion client : ce bouton opérateur est
+un simple lien `<a>`, **pas** un formulaire POST, car l'espace opérateur n'a
+aucune session — il n'y a rien à détruire. Le bouton de déconnexion du
+client, lui, reste en POST puisqu'il appelle `session()->destroy()`.
 
 ---
 

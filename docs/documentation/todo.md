@@ -133,3 +133,19 @@
       `['success' => …, 'message' => …]`, les 3 opérations, les vues et le
       layout client, plus un guide pour ajouter un mot de passe ou une
       nouvelle opération — **9 min**
+
+## Réorganisation des routes et navigation
+
+- [x] Correction de la régression du passage de `/` sur le login : la route
+      `GET login` avait disparu alors que les controllers y redirigent à
+      6 endroits (404 sur tout l'espace client). Route rétablie (`/` **et**
+      `/login` affichent la connexion) + 4 vues et 1 redirection repointées
+      vers `dashboard` — le lien « Dashboard » de la sidebar et le
+      **formulaire de filtre du dashboard** renvoyaient au login — **7 min**
+- [x] Bouton « Quitter l'espace opérateur » dans la sidebar de
+      `layout/main.php` (lien `<a>` vers `/login`, pas un POST : l'espace
+      opérateur n'a pas de session à détruire). Présent automatiquement sur
+      les 7 pages opérateur — **3 min**
+- [x] Mise à jour de `partie2-cote-client.md` : nouvelle organisation des
+      routes, explication de la régression et de la règle à suivre quand on
+      change une route, navigation entre les deux espaces — **4 min**

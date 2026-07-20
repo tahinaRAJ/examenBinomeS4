@@ -7,7 +7,7 @@
 
 <!-- Filtre par opérateur -->
 <div class="app-card" style="margin-bottom: 20px;">
-    <form method="get" action="<?= site_url('/') ?>" class="filter-form">
+    <form method="get" action="<?= site_url('dashboard') ?>" class="filter-form">
         <div class="form-group" style="margin-bottom: 0;">
             <label for="operateur">Opérateur</label>
             <select id="operateur" name="operateur" onchange="this.form.submit()">

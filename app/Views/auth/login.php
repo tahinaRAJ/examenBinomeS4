@@ -88,7 +88,7 @@
             </form>
 
             <div class="form-footer">
-                <p class="muted">Espace opérateur : <a href="<?= site_url('/') ?>" class="forgot-link">accéder au dashboard</a></p>
+                <p class="muted">Espace opérateur : <a href="<?= site_url('dashboard') ?>" class="forgot-link">accéder au dashboard</a></p>
             </div>
         </div>
     </div>
