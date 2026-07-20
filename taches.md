@@ -4,12 +4,12 @@
 
 # SETUP
 - [x] création du projet CodeIgniter 
-- [ ] installation de la base SQLite
-- [ ] configuration de l'environnement
+- [x] installation de la base SQLite
+- [x] configuration de l'environnement
 
 # Base de données
 - [x] création de la base SQLite 
-- [] création des tables
+- [x] création des tables
 - [] insertion de données de test
 
 # Template
@@ -25,4 +25,11 @@
     - [] listes des comptes avec une page détail
 
 ## Partie Client (Tahina)
--
+- [] logique d'Authentification
+- [] logique de mouvement
+    - [] retrait
+    - [] dépot
+    - [] transfert
+- [] Information Client 
+    - [] Profil
+    - [] historique
