@@ -83,7 +83,7 @@
 - [x] Formulaire de transfert avec plusieurs numéros
 - [x] Interface de l'option « frais de retrait inclus »
 
-### JavaScript
+### JavaScript (Ayman)
 - [x] `public/assets/js/apercu-operation.js`
     - [x] aperçu AJAX des frais sans écriture en base
     - [x] ajout et retrait dynamique des numéros destinataires
