@@ -52,7 +52,7 @@
             </thead>
             <tbody>
             <?php if ($mouvements === []) : ?>
-                <tr><td colspan="6" class="muted">Aucun mouvement pour ce compte.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun mouvement</div><div class="etat-vide-aide">Ce compte n'a encore aucune opération.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($mouvements as $m) : ?>
                 <?php $estEmis = (int) $m['idSender'] === (int) $compte['id']; ?>

@@ -59,7 +59,7 @@
             </thead>
             <tbody>
             <?php if ($mouvements === []) : ?>
-                <tr><td colspan="6" class="muted">Aucun mouvement ce jour-là.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun mouvement ce jour-là</div><div class="etat-vide-aide">Choisissez une autre date dans l'historique.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($mouvements as $m) : ?>
                 <tr>

@@ -252,32 +252,43 @@ class MouvementModel extends Model
             return ['success' => false, 'message' => 'Impossible de transférer vers son propre compte.'];
         }
 
-        $idType = model(TypeMouvementModel::class)->idParLibelle('Envoi');
         $typeMouvements = model(TypeMouvementModel::class);
-        // Frais fixe : tarif de l'opérateur de l'ÉMETTEUR, qui le garde.
-        $frais = model(FraisModel::class)->fraisPour($idType, $montant, (int) $sender['idOperateur']);
+        $fraisModel     = model(FraisModel::class);
 
-        $fraisModel = model(FraisModel::class);
+        $idType = $typeMouvements->idParLibelle('Envoi');
+
+        // Option « frais de retrait inclus » : l'émetteur ajoute au montant
+        // envoyé de quoi couvrir le futur retrait du destinataire. Ce frais
+        // se calcule donc avec la grille de l'opérateur du DESTINATAIRE,
+        // puisque c'est lui qui retirera.
         $fraisRetrait = 0.0;
-        $montantRecu    = $montant;
+        $montantRecu  = $montant;
 
         if ($retraitInclus) {
-            $frais = $fraisModel->fraisPour($typeMouvements->idParLibelle('Envoi'), $montant);
-            $montantRecu    = $montant + $fraisRetrait;
+            $fraisRetrait = $fraisModel->fraisPour(
+                $typeMouvements->idParLibelle('Retrait'),
+                $montant,
+                (int) $receiver['idOperateur']
+            );
+            $montantRecu = $montant + $fraisRetrait;
         }
-        $fraisTotal = $frais + $fraisRetrait;
-        
-        // Commission : % de l'opérateur du DESTINATAIRE, qui la garde.
-        // Uniquement si les deux opérateurs sont différents (pas sur un
-        // transfert interne).
-        $commission = $this->commissionPour($sender, $receiver, $montant);
 
-        // L'émetteur paie tout : montant + frais + commission.
-        // Le destinataire reçoit le montant exact.
-        $total = $montant + $fraisTotal + $commission;
+        // Frais d'envoi : tarif de l'opérateur de l'ÉMETTEUR, qui le garde.
+        $frais = $fraisModel->fraisPour($idType, $montantRecu, (int) $sender['idOperateur']);
+
+        // Commission : % de l'opérateur du DESTINATAIRE, qui la garde.
+        // Calculée sur le montant réellement transféré, et uniquement si les
+        // deux opérateurs sont différents (pas sur un transfert interne).
+        $commission = $this->commissionPour($sender, $receiver, $montantRecu);
+
+        // L'émetteur paie tout : montant reçu + frais d'envoi + commission.
+        $total = $montantRecu + $frais + $commission;
 
         if ($sender['solde'] < $total) {
             $detail = 'frais de ' . number_format($frais, 0, ',', ' ') . ' Ar';
+            if ($fraisRetrait > 0) {
+                $detail .= ' + frais de retrait offert de ' . number_format($fraisRetrait, 0, ',', ' ') . ' Ar';
+            }
             if ($commission > 0) {
                 $detail .= ' + commission de ' . number_format($commission, 0, ',', ' ') . ' Ar';
             }
@@ -297,7 +308,9 @@ class MouvementModel extends Model
         ]);
 
         $comptes->update($idSender, ['solde' => $sender['solde'] - $total]);
-        $comptes->update($receiver['id'], ['solde' => $receiver['solde'] + $montant]);
+        // Le destinataire reçoit le montant, augmenté du frais de retrait
+        // si l'émetteur a choisi de le lui offrir.
+        $comptes->update($receiver['id'], ['solde' => $receiver['solde'] + $montantRecu]);
 
         $this->db->transComplete();
 
@@ -305,7 +318,10 @@ class MouvementModel extends Model
             return ['success' => false, 'message' => 'Erreur lors du transfert.'];
         }
 
-        $message = 'Transfert de ' . number_format($montant, 0, ',', ' ') . ' Ar effectué vers ' . $numeroReceiver . '.';
+        $message = 'Transfert de ' . number_format($montantRecu, 0, ',', ' ') . ' Ar effectué vers ' . $numeroReceiver . '.';
+        if ($fraisRetrait > 0) {
+            $message .= ' Frais de retrait offert : ' . number_format($fraisRetrait, 0, ',', ' ') . ' Ar.';
+        }
         if ($commission > 0) {
             $message .= ' Commission inter-opérateurs : ' . number_format($commission, 0, ',', ' ') . ' Ar.';
         }
@@ -482,5 +498,150 @@ class MouvementModel extends Model
             ->groupEnd()
             ->orderBy('mouvement.dateMouvement', 'DESC')
             ->findAll();
+    }
+
+    // ==================================================================
+    // Simulations : le même calcul que les opérations réelles, mais sans
+    // rien écrire en base. Sert à l'aperçu en direct des formulaires.
+    // ==================================================================
+
+    /**
+     * Détail chiffré d'un transfert, sans l'effectuer.
+     *
+     * Retourne toujours un tableau avec 'ok' (bool). Si 'ok' est false,
+     * 'message' explique pourquoi (numéro inconnu, montant invalide…).
+     */
+    public function simulerTransfert(int $idSender, string $numeroReceiver, float $montant, bool $retraitInclus = false): array
+    {
+        $comptes = model(CompteModel::class);
+        $sender  = $comptes->find($idSender);
+
+        if ($sender === null) {
+            return ['ok' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        $numeroReceiver = trim($numeroReceiver);
+
+        if ($numeroReceiver === '') {
+            return ['ok' => false, 'message' => 'Saisissez le numéro du destinataire.'];
+        }
+
+        $receiver = $comptes->where('numero', $numeroReceiver)->first();
+
+        if ($receiver === null) {
+            // Le préfixe permet au moins d'annoncer l'opérateur reconnu
+            $prefixe = model(PrefixeModel::class)->operateurPourNumero($numeroReceiver);
+
+            return [
+                'ok'      => false,
+                'message' => $prefixe === null
+                    ? 'Numéro inconnu.'
+                    : 'Aucun compte ' . $prefixe['nomOperateur'] . ' avec ce numéro.',
+            ];
+        }
+
+        if ((int) $receiver['id'] === $idSender) {
+            return ['ok' => false, 'message' => 'Impossible de transférer vers son propre compte.'];
+        }
+
+        if ($montant <= 0) {
+            return ['ok' => false, 'message' => 'Saisissez un montant.'];
+        }
+
+        $typeMouvements = model(TypeMouvementModel::class);
+        $fraisModel     = model(FraisModel::class);
+        $operateurs     = model(OperateurModel::class);
+
+        $fraisRetrait = 0.0;
+        if ($retraitInclus) {
+            $fraisRetrait = $fraisModel->fraisPour(
+                $typeMouvements->idParLibelle('Retrait'),
+                $montant,
+                (int) $receiver['idOperateur']
+            );
+        }
+
+        $montantRecu = $montant + $fraisRetrait;
+        $frais       = $fraisModel->fraisPour($typeMouvements->idParLibelle('Envoi'), $montantRecu, (int) $sender['idOperateur']);
+        $commission  = $this->commissionPour($sender, $receiver, $montantRecu);
+        $total       = $montantRecu + $frais + $commission;
+
+        $opSender   = $operateurs->find($sender['idOperateur']);
+        $opReceiver = $operateurs->find($receiver['idOperateur']);
+        $interOp    = (int) $sender['idOperateur'] !== (int) $receiver['idOperateur'];
+
+        return [
+            'ok'              => true,
+            'montant'         => $montant,
+            'fraisRetrait'    => $fraisRetrait,
+            'montantRecu'     => $montantRecu,
+            'frais'           => $frais,
+            'commission'      => $commission,
+            'total'           => $total,
+            'solde'           => (float) $sender['solde'],
+            'soldeApres'      => (float) $sender['solde'] - $total,
+            'soldeSuffisant'  => (float) $sender['solde'] >= $total,
+            'nomReceiver'     => $receiver['nom'],
+            'operateurSender' => $opSender['nom'] ?? '',
+            'operateurRecu'   => $opReceiver['nom'] ?? '',
+            'tauxCommission'  => (float) ($opReceiver['pourcentageCommission'] ?? 0),
+            'interOperateurs' => $interOp,
+        ];
+    }
+
+    /**
+     * Détail chiffré d'un retrait, sans l'effectuer.
+     */
+    public function simulerRetrait(int $idCompte, float $montant): array
+    {
+        $compte = model(CompteModel::class)->find($idCompte);
+
+        if ($compte === null) {
+            return ['ok' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        if ($montant <= 0) {
+            return ['ok' => false, 'message' => 'Saisissez un montant.'];
+        }
+
+        $idType = model(TypeMouvementModel::class)->idParLibelle('Retrait');
+        $frais  = model(FraisModel::class)->fraisPour($idType, $montant, (int) $compte['idOperateur']);
+        $total  = $montant + $frais;
+
+        return [
+            'ok'             => true,
+            'montant'        => $montant,
+            'frais'          => $frais,
+            'total'          => $total,
+            'solde'          => (float) $compte['solde'],
+            'soldeApres'     => (float) $compte['solde'] - $total,
+            'soldeSuffisant' => (float) $compte['solde'] >= $total,
+        ];
+    }
+
+    /**
+     * Détail chiffré d'un dépôt (jamais de frais), sans l'effectuer.
+     */
+    public function simulerDepot(int $idCompte, float $montant): array
+    {
+        $compte = model(CompteModel::class)->find($idCompte);
+
+        if ($compte === null) {
+            return ['ok' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        if ($montant <= 0) {
+            return ['ok' => false, 'message' => 'Saisissez un montant.'];
+        }
+
+        return [
+            'ok'             => true,
+            'montant'        => $montant,
+            'frais'          => 0.0,
+            'total'          => $montant,
+            'solde'          => (float) $compte['solde'],
+            'soldeApres'     => (float) $compte['solde'] + $montant,
+            'soldeSuffisant' => true,
+        ];
     }
 }

@@ -155,7 +155,7 @@
                 </thead>
                 <tbody>
                 <?php if ($gainsParJour === []) : ?>
-                    <tr><td colspan="5" class="muted">Aucun mouvement enregistré.</td></tr>
+                    <tr><td colspan="5"><div class="etat-vide"><div class="etat-vide-titre">Aucun gain pour l'instant</div><div class="etat-vide-aide">Les frais perçus apparaîtront ici.</div></div></td></tr>
                 <?php endif ?>
                 <?php foreach ($gainsParJour as $g) : ?>
                     <tr>
@@ -187,7 +187,7 @@
                 </thead>
                 <tbody>
                 <?php if ($statsParType === []) : ?>
-                    <tr><td colspan="3" class="muted">Aucun mouvement.</td></tr>
+                    <tr><td colspan="3"><div class="etat-vide"><div class="etat-vide-titre">Aucun mouvement</div><div class="etat-vide-aide">Rien à répartir pour l'instant.</div></div></td></tr>
                 <?php endif ?>
                 <?php foreach ($statsParType as $s) : ?>
                     <tr>
@@ -222,7 +222,7 @@
             </thead>
             <tbody>
             <?php if ($comptes === []) : ?>
-                <tr><td colspan="6" class="muted">Aucun compte enregistré.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun compte client</div><div class="etat-vide-aide">Créez un compte pour commencer.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($comptes as $c) : ?>
                 <tr>

@@ -39,7 +39,7 @@
                 </thead>
                 <tbody>
                 <?php if ($tarifs === []) : ?>
-                    <tr><td colspan="6" class="muted">Aucun tarif enregistré.</td></tr>
+                    <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun tarif</div><div class="etat-vide-aide">Ajoutez une tranche avec le formulaire ci-contre.</div></div></td></tr>
                 <?php endif ?>
                 <?php foreach ($tarifs as $t) : ?>
                     <tr>
@@ -71,6 +71,41 @@
             💡 Pour changer un tarif sans perdre l'historique, préférez <strong>ajouter</strong> une nouvelle
             ligne avec une date d'entrée en vigueur : les mouvements passés gardent leur frais figé.
         </p>
+    </div>
+
+    <div>
+    <div class="app-card">
+        <h2>Simulateur</h2>
+        <p class="muted" style="margin-bottom: 14px;">
+            Vérifiez le frais appliqué pour un montant donné, sans effectuer de mouvement.
+        </p>
+
+        <form id="simulateurTarif" onsubmit="return false;" data-url="<?= site_url('tarifs/simuler') ?>">
+            <div class="form-group">
+                <label for="simOperateur">Opérateur</label>
+                <select id="simOperateur" name="idOperateur">
+                    <?php foreach ($operateurs as $op) : ?>
+                        <option value="<?= $op['id'] ?>" <?= $idOperateur === (int) $op['id'] ? 'selected' : '' ?>>
+                            <?= esc($op['nom']) ?>
+                        </option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="simType">Type d'opération</label>
+                <select id="simType" name="idTypeMouvement">
+                    <?php foreach ($types as $type) : ?>
+                        <option value="<?= $type['id'] ?>"><?= esc($type['libelle']) ?></option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="simMontant">Montant (Ar)</label>
+                <input type="number" id="simMontant" name="montant" min="1" step="1" placeholder="Ex. 25000" inputmode="numeric">
+            </div>
+        </form>
+
+        <div id="resultatSimulateur" class="apercu"></div>
     </div>
 
     <div class="app-card">
@@ -128,6 +163,11 @@
             </div>
         </form>
     </div>
+    </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="<?= base_url('assets/js/simulateur-tarif.js') ?>"></script>
 <?= $this->endSection() ?>

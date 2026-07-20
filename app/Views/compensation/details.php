@@ -25,7 +25,7 @@
             </thead>
             <tbody>
             <?php if ($mouvements === []) : ?>
-                <tr><td colspan="6" class="muted">Aucun mouvement échangé avec cet opérateur.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun échange</div><div class="etat-vide-aide">Aucun transfert entre ces deux opérateurs.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($mouvements as $m) : ?>
                 <?php $sortant = (int) $m['opSender'] === (int) $operateur['id']; ?>

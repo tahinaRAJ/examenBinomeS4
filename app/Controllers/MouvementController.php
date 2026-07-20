@@ -24,6 +24,40 @@ class MouvementController extends BaseController
         return $client;
     }
 
+    // ---------- Aperçu en direct (AJAX) ----------
+
+    /**
+     * Renvoie en JSON le détail chiffré d'une opération, sans l'effectuer.
+     * Alimente l'aperçu affiché sous les formulaires.
+     *
+     * $operation : 'transfert' | 'retrait' | 'depot'
+     */
+    public function simuler(string $operation)
+    {
+        $client = $this->clientConnecte();
+
+        if (! is_array($client)) {
+            return $this->response->setStatusCode(401)->setJSON(['ok' => false, 'message' => 'Non connecté.']);
+        }
+
+        $montant    = (float) $this->request->getPost('montant');
+        $mouvements = model(MouvementModel::class);
+
+        $resultat = match ($operation) {
+            'transfert' => $mouvements->simulerTransfert(
+                $client['id'],
+                trim((string) $this->request->getPost('numeroReceiver')),
+                $montant,
+                $this->request->getPost('retraitInclus') !== null
+            ),
+            'retrait' => $mouvements->simulerRetrait($client['id'], $montant),
+            'depot'   => $mouvements->simulerDepot($client['id'], $montant),
+            default   => ['ok' => false, 'message' => 'Opération inconnue.'],
+        };
+
+        return $this->response->setJSON($resultat);
+    }
+
      // ---------- Dépôt ----------
 
     public function depotForm()

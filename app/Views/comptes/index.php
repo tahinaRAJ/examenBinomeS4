@@ -43,7 +43,7 @@
             </thead>
             <tbody>
             <?php if ($comptes === []) : ?>
-                <tr><td colspan="6" class="muted">Aucun compte enregistré.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun compte client</div><div class="etat-vide-aide">Créez un compte pour commencer.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($comptes as $c) : ?>
                 <tr>

@@ -244,3 +244,196 @@
 .filter-form .form-group {
     max-width: 280px;
 }
+
+/* ==================================================================
+   Aperçu en direct des frais (sous les formulaires d'opération)
+   ================================================================== */
+
+.apercu {
+    margin-top: 20px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    transition: opacity 0.15s ease, border-color 0.2s ease;
+}
+
+.apercu-chargement {
+    opacity: 0.55;
+}
+
+.apercu-ok {
+    border-color: color-mix(in srgb, var(--accent-copper) 45%, var(--border));
+}
+
+.apercu-insuffisant {
+    border-color: var(--loss);
+}
+
+.apercu-message {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.apercu-ligne {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 9px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    border-bottom: 1px dashed color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.apercu-ligne:last-child {
+    border-bottom: none;
+}
+
+.apercu-ligne span:last-child {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;   /* chiffres alignés */
+    color: var(--text-primary);
+}
+
+.apercu-ligne-fort {
+    color: var(--text-primary);
+}
+
+.apercu-ligne-total {
+    border-top: 2px solid var(--border);
+    border-bottom: none;
+    margin-top: 6px;
+    padding-top: 14px;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.apercu-note {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.apercu-alerte {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--loss) 15%, transparent);
+    color: var(--loss);
+    font-size: 13px;
+}
+
+/* ==================================================================
+   Améliorations générales d'interface
+   ================================================================== */
+
+/* Case à cocher lisible (le style de base écrase la largeur à 100%) */
+.form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.form-check:hover {
+    border-color: var(--accent-copper);
+}
+
+.form-check input[type="checkbox"] {
+    width: auto;
+    margin: 2px 0 0;
+    accent-color: var(--accent-copper);
+    flex-shrink: 0;
+}
+
+.form-check-texte {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.form-check-aide {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+/* Aide sous un champ */
+.form-aide {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* État vide de tableau, plus lisible qu'une simple ligne grise */
+.etat-vide {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+}
+
+.etat-vide-titre {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.etat-vide-aide {
+    font-size: 13px;
+}
+
+/* Chiffres alignés dans les tableaux */
+.app-table .text-right {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Le tableau ne doit pas déborder de sa carte */
+.table-scroll {
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+
+/* Boutons : état désactivé et focus visible (accessibilité) */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn:focus-visible,
+.form-group input:focus-visible,
+.form-group select:focus-visible {
+    outline: 2px solid var(--accent-copper);
+    outline-offset: 2px;
+}
+
+/* Badge neutre pour les informations secondaires */
+.badge-neutre {
+    background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+    color: var(--text-secondary);
+}
+
+/* Bandeau d'information dans une carte */
+.info-bloc {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent-copper) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-copper) 30%, transparent);
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Rendre les lignes cliquables plus évidentes */
+.app-table tbody tr {
+    transition: background 0.15s ease;
+}

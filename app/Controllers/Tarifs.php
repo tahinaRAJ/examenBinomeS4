@@ -20,6 +20,36 @@ class Tarifs extends BaseController
         ]);
     }
 
+    /**
+     * Simulateur (AJAX) : quel frais s'appliquerait pour un opérateur,
+     * un type d'opération et un montant donnés ? Sert à vérifier sa grille
+     * sans avoir à effectuer un vrai mouvement.
+     */
+    public function simuler()
+    {
+        $idOperateur = (int) $this->request->getPost('idOperateur');
+        $idType      = (int) $this->request->getPost('idTypeMouvement');
+        $montant     = (float) $this->request->getPost('montant');
+
+        if ($idOperateur === 0 || $idType === 0 || $montant <= 0) {
+            return $this->response->setJSON(['ok' => false, 'message' => 'Choisissez un opérateur, un type et un montant.']);
+        }
+
+        $frais     = model(FraisModel::class)->fraisPour($idType, $montant, $idOperateur);
+        $operateur = model(OperateurModel::class)->find($idOperateur);
+        $type      = model(TypeMouvementModel::class)->find($idType);
+
+        return $this->response->setJSON([
+            'ok'          => true,
+            'montant'     => $montant,
+            'frais'       => $frais,
+            'total'       => $montant + $frais,
+            'operateur'   => $operateur['nom'] ?? '',
+            'type'        => $type['libelle'] ?? '',
+            'aucuneGrille' => $frais <= 0,
+        ]);
+    }
+
     public function store()
     {
         $frais = model(FraisModel::class);

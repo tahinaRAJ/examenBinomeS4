@@ -214,3 +214,39 @@
       stockés séparément), transfert interne (commission 0), gains détaillés
       et compensation croisés avec le SQL, intégrité et logs — **9 min**
 - [x] Documentation `partie3-inter-operateurs.md` + mémo `tables` — **10 min**
+
+## Interface : aperçu en direct des frais (AJAX) et design
+
+- [x] **Correction du bug « frais de retrait inclus »** : l'appel à
+      `fraisPour()` ne passait que 2 arguments sur 3 → `ArgumentCountError`,
+      erreur 500 dès que la case était cochée. Au passage `$fraisRetrait`
+      n'était jamais calculé, le type demandé était `'Envoi'` au lieu de
+      `'Retrait'`, et le destinataire était crédité de `$montant` alors que le
+      mouvement enregistrait `$montantRecu`. Corrigé selon la règle : frais de
+      retrait calculé avec la grille de l'**opérateur du destinataire**, ajouté
+      au montant reçu — **8 min**
+- [x] **Simulations dans le Model** : `simulerTransfert()`, `simulerRetrait()`
+      et `simulerDepot()` — même calcul que les opérations réelles mais sans
+      aucune écriture. La règle « pas de SQL hors des Models » est respectée :
+      le JS n'effectue aucun calcul de frais — **7 min**
+- [x] **Endpoint JSON** `POST client/simuler/(transfert|retrait|depot)` +
+      `POST tarifs/simuler`, protégés par la session — **4 min**
+- [x] **`apercu-operation.js`** : aperçu en direct sous les formulaires client
+      (anti-rebond de 350 ms, réponses hors-ordre ignorées, dégradation propre
+      si le réseau échoue). Affiche montant, frais de retrait offert, ce que
+      reçoit le destinataire, frais d'envoi, commission (avec taux et
+      opérateur), total débité et solde après opération — **9 min**
+- [x] **`simulateur-tarif.js`** : sur l'écran Tarifs, vérifier le frais
+      appliqué pour un opérateur/type/montant sans créer de mouvement, avec
+      alerte si aucune tranche ne couvre le montant — **5 min**
+- [x] Section `scripts` ajoutée aux deux layouts pour injecter le JS par page
+      — **1 min**
+- [x] **Design** : styles de l'aperçu (lignes, total, alerte, chiffres alignés
+      en `tabular-nums`), case à cocher lisible (`.form-check`), blocs
+      d'information, focus visible pour l'accessibilité, et **états vides**
+      des 11 tableaux remplacés par un titre + une aide au lieu d'une ligne
+      grise — **10 min**
+- [x] Vérification : l'aperçu annonce **exactement** ce que l'opération
+      exécute (3 cas testés, total débité et montant reçu identiques au
+      centime), 16 pages en 200, endpoints conformes, syntaxe PHP et JS
+      valides — **7 min**

@@ -19,7 +19,7 @@
                 </thead>
                 <tbody>
                 <?php if ($prefixes === []) : ?>
-                    <tr><td colspan="3" class="muted">Aucun préfixe enregistré.</td></tr>
+                    <tr><td colspan="3"><div class="etat-vide"><div class="etat-vide-titre">Aucun préfixe</div><div class="etat-vide-aide">Ajoutez un préfixe avec le formulaire ci-contre.</div></div></td></tr>
                 <?php endif ?>
                 <?php foreach ($prefixes as $p) : ?>
                     <tr>

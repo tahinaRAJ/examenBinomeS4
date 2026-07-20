@@ -79,7 +79,7 @@ $net = $totalAVerser - $totalARecevoir;
             </thead>
             <tbody>
             <?php if ($situation === []) : ?>
-                <tr><td colspan="6" class="muted">Aucun autre opérateur enregistré.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucun autre opérateur</div><div class="etat-vide-aide">Ajoutez un opérateur pour voir la compensation.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($situation as $s) : ?>
                 <tr>

@@ -30,6 +30,7 @@ $routes->post('prefixes/(:num)/delete', 'Prefixes::delete/$1');
 // Gestion des tarifs (frais)
 $routes->get('tarifs', 'Tarifs::index');
 $routes->post('tarifs', 'Tarifs::store');
+$routes->post('tarifs/simuler', 'Tarifs::simuler');
 $routes->get('tarifs/(:num)/edit', 'Tarifs::edit/$1');
 $routes->post('tarifs/(:num)', 'Tarifs::update/$1');
 $routes->post('tarifs/(:num)/delete', 'Tarifs::delete/$1');
@@ -66,3 +67,6 @@ $routes->post('client/retrait', 'MouvementController::retrait');
 
 $routes->get('client/transfert', 'MouvementController::transfertForm');
 $routes->post('client/transfert', 'MouvementController::transfert');
+
+// Aperçu en direct des frais (AJAX, renvoie du JSON, n'écrit rien)
+$routes->post('client/simuler/(:segment)', 'MouvementController::simuler/$1');

@@ -146,5 +146,6 @@
     </div>
 
     <script src="<?= base_url('assets/js/templatemo-crypto-script.js') ?>"></script>
+    <?= $this->renderSection('scripts') ?>
 </body>
 </html>

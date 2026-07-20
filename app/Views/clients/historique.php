@@ -61,7 +61,7 @@ foreach ($mouvements as $m) {
             </thead>
             <tbody>
             <?php if ($mouvements === []) : ?>
-                <tr><td colspan="6" class="muted">Aucune opération pour le moment.</td></tr>
+                <tr><td colspan="6"><div class="etat-vide"><div class="etat-vide-titre">Aucune opération</div><div class="etat-vide-aide">Vos dépôts, retraits et transferts s'afficheront ici.</div></div></td></tr>
             <?php endif ?>
             <?php foreach ($mouvements as $m) : ?>
                 <?php $estEmis = (int) $m['idSender'] === (int) $client['id']; ?>
