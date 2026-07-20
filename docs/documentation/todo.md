@@ -101,12 +101,35 @@
 
 ### Vues
 
-- [ ] Connexion : formulaire numéro de compte + mot de passe
-- [ ] Profil : informations du client (nom, numéro, solde)
-- [ ] Opérations : formulaire de dépôt / retrait / transfert
-- [ ] Historique : liste des mouvements du compte
+- [x] `layout/client.php` : layout dédié à l'espace client (navigation
+      Profil / Historique / Dépôt / Retrait / Transfert, bouton de
+      déconnexion en POST, identité lue en session, gestion des flash
+      `success` / `erreur` / `error`) — **4 min**
+- [x] Connexion : page autonome (sans layout) reprenant
+      `templatemo-crypto-login.css`, champ numéro de compte conservé via
+      `old()` — **3 min**
+- [x] Profil : cartes solde / numéro / statut / date d'ouverture, tableau
+      des informations et accès rapide aux opérations — **3 min**
+- [x] Opérations : formulaires de dépôt / retrait / transfert, chacun avec
+      le solde courant et le rappel de sa règle de tarification — **5 min**
+- [x] Historique : tableau des mouvements (sens entrant/sortant, montant
+      coloré, frais figés) + 4 totaux calculés en PHP dans la vue, sans
+      requête supplémentaire — **4 min**
 
 ### Vérification
 
-- [ ] Test des 3 opérations (dépôt, retrait, transfert) et de leurs cas
-      d'erreur (solde insuffisant, destinataire introuvable, etc.)
+- [x] Test des 3 opérations et de leurs cas d'erreur sur le serveur local :
+      dépôt 50 000 (frais 0), retrait 20 000 (frais 500), transfert 5 000
+      (frais **150** = tarif en vigueur depuis le 15/07, ce qui valide la
+      grille datée), montant nul/négatif, solde insuffisant, destinataire
+      introuvable, transfert vers soi-même, accès sans connexion sur les
+      5 pages, connexion d'un compte inactif, déconnexion. Base restaurée
+      depuis `base.sql` après les tests — **6 min**
+
+## Documentation détaillée du code (partie 2)
+
+- [x] `partie2-cote-client.md` : explication complète de l'espace client —
+      la session, les transactions SQL, le retour
+      `['success' => …, 'message' => …]`, les 3 opérations, les vues et le
+      layout client, plus un guide pour ajouter un mot de passe ou une
+      nouvelle opération — **9 min**
