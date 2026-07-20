@@ -103,7 +103,9 @@ class MouvementController extends BaseController
 
         $montant        = (float) $this->request->getPost('montant');
         $numeroReceiver = trim((string) $this->request->getPost('numeroReceiver'));
-        $resultat       = model(MouvementModel::class)->transferer($client['id'], $numeroReceiver, $montant);
+        $retraitInclus  = $this->request->getPost('retraitInclus') !== null;
+        $resultat       = model(MouvementModel::class)->transferer($client['id'], $numeroReceiver, $montant, $retraitInclus
+        );
 
         return redirect()->to('/client/transfert')
             ->with($resultat['success'] ? 'success' : 'erreur', $resultat['message']);

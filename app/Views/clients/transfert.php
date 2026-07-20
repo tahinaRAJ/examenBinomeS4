@@ -18,10 +18,18 @@
                        placeholder="Ex. 0344455667" required autofocus>
             </div>
 
+            
             <div class="form-group">
                 <label for="montant">Montant à envoyer (Ar)</label>
                 <input type="number" id="montant" name="montant" min="1" step="1"
-                       placeholder="Ex. 10000" required>
+                    placeholder="Ex. 10000" required>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="retraitInclus" name="retraitInclus" value="1">
+                    Inclure les frais de retrait (offert au destinataire)
+                </label>
             </div>
 
             <div class="form-actions">

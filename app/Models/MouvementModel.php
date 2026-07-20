@@ -230,7 +230,7 @@ class MouvementModel extends Model
      * Transfert : débite l'émetteur du montant + frais, crédite le
      * destinataire (retrouvé par son numéro) du montant seul.
      */
-    public function transferer(int $idSender, string $numeroReceiver, float $montant): array
+    public function transferer(int $idSender, string $numeroReceiver, float $montant, bool $retraitInclus = false): array
     {
         if ($montant <= 0) {
             return ['success' => false, 'message' => 'Le montant doit être positif.'];
@@ -253,10 +253,20 @@ class MouvementModel extends Model
         }
 
         $idType = model(TypeMouvementModel::class)->idParLibelle('Envoi');
-
+        $typeMouvements = model(TypeMouvementModel::class);
         // Frais fixe : tarif de l'opérateur de l'ÉMETTEUR, qui le garde.
         $frais = model(FraisModel::class)->fraisPour($idType, $montant, (int) $sender['idOperateur']);
 
+        $fraisModel = model(FraisModel::class);
+        $fraisRetrait = 0.0;
+        $montantRecu    = $montant;
+
+        if ($retraitInclus) {
+            $frais = $fraisModel->fraisPour($typeMouvements->idParLibelle('Envoi'), $montant);
+            $montantRecu    = $montant + $fraisRetrait;
+        }
+        $fraisTotal = $frais + $fraisRetrait;
+        
         // Commission : % de l'opérateur du DESTINATAIRE, qui la garde.
         // Uniquement si les deux opérateurs sont différents (pas sur un
         // transfert interne).
@@ -264,7 +274,7 @@ class MouvementModel extends Model
 
         // L'émetteur paie tout : montant + frais + commission.
         // Le destinataire reçoit le montant exact.
-        $total = $montant + $frais + $commission;
+        $total = $montant + $fraisTotal + $commission;
 
         if ($sender['solde'] < $total) {
             $detail = 'frais de ' . number_format($frais, 0, ',', ' ') . ' Ar';
@@ -281,7 +291,7 @@ class MouvementModel extends Model
             'idTypeMouvement' => $idType,
             'idSender'        => $idSender,
             'idReceiver'      => $receiver['id'],
-            'montant'         => $montant,
+            'montant'         => $montantRecu,
             'frais'           => $frais,
             'commission'      => $commission,
         ]);
