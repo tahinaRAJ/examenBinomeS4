@@ -1,0 +1,102 @@
+<?= $this->extend('layout/main') ?>
+
+<?= $this->section('title') ?>Tarifs<?= $this->endSection() ?>
+<?= $this->section('subtitle') ?>Frais par type d'opération — l'historique des tarifs est conservé grâce à la date<?= $this->endSection() ?>
+
+<?= $this->section('content') ?>
+
+<div class="app-grid-2">
+    <div class="app-card">
+        <h2>Grille tarifaire (du plus récent au plus ancien)</h2>
+        <div class="table-scroll">
+            <table class="app-table">
+                <thead>
+                    <tr>
+                        <th>Type d'opération</th>
+                        <th class="text-right">Tranche (Ar)</th>
+                        <th class="text-right">Frais (Ar)</th>
+                        <th>En vigueur depuis</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ($tarifs === []) : ?>
+                    <tr><td colspan="5" class="muted">Aucun tarif enregistré.</td></tr>
+                <?php endif ?>
+                <?php foreach ($tarifs as $t) : ?>
+                    <tr>
+                        <td><span class="badge badge-operateur"><?= esc($t['libelleType']) ?></span></td>
+                        <td class="text-right">
+                            <?= number_format((float) $t['minMontant'], 0, ',', ' ') ?>
+                            —
+                            <?= number_format((float) $t['maxMontant'], 0, ',', ' ') ?>
+                        </td>
+                        <td class="text-right"><strong><?= number_format((float) $t['montantFrais'], 0, ',', ' ') ?></strong></td>
+                        <td class="muted"><?= esc($t['dateFrais']) ?></td>
+                        <td>
+                            <div class="actions">
+                                <a class="btn btn-sm" href="<?= site_url('tarifs/' . $t['id'] . '/edit') ?>">Modifier</a>
+                                <form method="post" action="<?= site_url('tarifs/' . $t['id'] . '/delete') ?>"
+                                      onsubmit="return confirm('Supprimer ce tarif ?');">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach ?>
+                </tbody>
+            </table>
+        </div>
+        <p class="muted" style="margin-top: 12px;">
+            💡 Pour changer un tarif sans perdre l'historique, préférez <strong>ajouter</strong> une nouvelle
+            ligne avec une date d'entrée en vigueur : les mouvements passés gardent leur frais figé.
+        </p>
+    </div>
+
+    <div class="app-card">
+        <h2>Ajouter un tarif</h2>
+
+        <?php if (session()->getFlashdata('errors')) : ?>
+            <?php foreach (session()->getFlashdata('errors') as $erreur) : ?>
+                <p class="form-error"><?= esc($erreur) ?></p>
+            <?php endforeach ?>
+        <?php endif ?>
+
+        <form method="post" action="<?= site_url('tarifs') ?>">
+            <?= csrf_field() ?>
+            <div class="form-group">
+                <label for="idTypeMouvement">Type d'opération</label>
+                <select id="idTypeMouvement" name="idTypeMouvement" required>
+                    <option value="">— Choisir —</option>
+                    <?php foreach ($types as $type) : ?>
+                        <option value="<?= $type['id'] ?>" <?= old('idTypeMouvement') == $type['id'] ? 'selected' : '' ?>>
+                            <?= esc($type['libelle']) ?>
+                        </option>
+                    <?php endforeach ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="minMontant">Montant minimum (Ar)</label>
+                <input type="number" step="any" min="0" id="minMontant" name="minMontant" value="<?= old('minMontant') ?>" required>
+            </div>
+            <div class="form-group">
+                <label for="maxMontant">Montant maximum (Ar)</label>
+                <input type="number" step="any" min="0" id="maxMontant" name="maxMontant" value="<?= old('maxMontant') ?>" required>
+            </div>
+            <div class="form-group">
+                <label for="montantFrais">Frais (Ar)</label>
+                <input type="number" step="any" min="0" id="montantFrais" name="montantFrais" value="<?= old('montantFrais') ?>" required>
+            </div>
+            <div class="form-group">
+                <label for="dateFrais">Date d'entrée en vigueur <span class="muted">(vide = maintenant)</span></label>
+                <input type="datetime-local" id="dateFrais" name="dateFrais" value="<?= old('dateFrais') ?>">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<?= $this->endSection() ?>

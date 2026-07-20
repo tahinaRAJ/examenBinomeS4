@@ -15,6 +15,7 @@ id
 numero
 nom
 solde
+estActif           (1 = actif, 0 = désactivé)
 idOperateur
 created_at
 updated_at
