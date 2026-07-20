@@ -91,4 +91,25 @@ class CompteModel extends Model
     {
         return $this->update($id, ['estActif' => $actif ? 1 : 0]);
     }
+
+    public function getNom(int $id): ?string
+    {
+        $compte = $this->select('nom')->find($id);
+
+        return $compte === null ? null : $compte['nom'];
+    }
+
+    public function getNum(int $id): ?string
+    {
+        $compte = $this->select('numero')->find($id);
+
+        return $compte === null ? null : $compte['numero'];
+    }
+
+    public function getSolde(int $id): ?float
+    {
+        $compte = $this->select('solde')->find($id);
+
+        return $compte === null ? null : (float) $compte['solde'];
+    }
 }

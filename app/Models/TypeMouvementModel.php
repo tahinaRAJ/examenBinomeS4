@@ -18,4 +18,15 @@ class TypeMouvementModel extends Model
     {
         return $this->where('estTarifable', 1)->orderBy('libelle')->findAll();
     }
+
+    /**
+     * Retrouve l'id d'un type de mouvement à partir de son libellé exact
+     * (ex. 'Dépôt', 'Retrait', 'Envoi' — voir base.sql).
+     */
+    public function idParLibelle(string $libelle): ?int
+    {
+        $type = $this->where('libelle', $libelle)->first();
+
+        return $type !== null ? (int) $type['id'] : null;
+    }
 }

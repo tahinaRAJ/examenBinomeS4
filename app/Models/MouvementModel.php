@@ -138,4 +138,146 @@ class MouvementModel extends Model
             ->orderBy('gains', 'DESC')
             ->get()->getResultArray();
     }
+
+    /**
+     * Dépôt : crédite le compte, aucun frais. Opération atomique
+     * (insertion du mouvement + mise à jour du solde dans une transaction).
+     */
+    public function deposer(int $idCompte, float $montant): array
+    {
+        if ($montant <= 0) {
+            return ['success' => false, 'message' => 'Le montant doit être positif.'];
+        }
+
+        $comptes = model(CompteModel::class);
+        $compte  = $comptes->find($idCompte);
+
+        if ($compte === null) {
+            return ['success' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        $idType = model(TypeMouvementModel::class)->idParLibelle('Dépôt');
+
+        $this->db->transStart();
+
+        $this->insert([
+            'idTypeMouvement' => $idType,
+            'idSender'        => null,
+            'idReceiver'      => $idCompte,
+            'montant'         => $montant,
+            'frais'           => 0,
+        ]);
+
+        $comptes->update($idCompte, ['solde' => $compte['solde'] + $montant]);
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return ['success' => false, 'message' => 'Erreur lors du dépôt.'];
+        }
+
+        return ['success' => true, 'message' => 'Dépôt de ' . number_format($montant, 0, ',', ' ') . ' Ar effectué.'];
+    }
+
+    /**
+     * Retrait : débite le compte du montant + frais (tarif en vigueur).
+     * Refuse si le solde est insuffisant.
+     */
+    public function retirer(int $idCompte, float $montant): array
+    {
+        if ($montant <= 0) {
+            return ['success' => false, 'message' => 'Le montant doit être positif.'];
+        }
+
+        $comptes = model(CompteModel::class);
+        $compte  = $comptes->find($idCompte);
+
+        if ($compte === null) {
+            return ['success' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        $idType = model(TypeMouvementModel::class)->idParLibelle('Retrait');
+        $frais  = model(FraisModel::class)->fraisPour($idType, $montant);
+        $total  = $montant + $frais;
+
+        if ($compte['solde'] < $total) {
+            return ['success' => false, 'message' => 'Solde insuffisant (montant + frais de ' . number_format($frais, 0, ',', ' ') . ' Ar).'];
+        }
+
+        $this->db->transStart();
+
+        $this->insert([
+            'idTypeMouvement' => $idType,
+            'idSender'        => $idCompte,
+            'idReceiver'      => null,
+            'montant'         => $montant,
+            'frais'           => $frais,
+        ]);
+
+        $comptes->update($idCompte, ['solde' => $compte['solde'] - $total]);
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return ['success' => false, 'message' => 'Erreur lors du retrait.'];
+        }
+
+        return ['success' => true, 'message' => 'Retrait de ' . number_format($montant, 0, ',', ' ') . ' Ar effectué.'];
+    }
+
+    /**
+     * Transfert : débite l'émetteur du montant + frais, crédite le
+     * destinataire (retrouvé par son numéro) du montant seul.
+     */
+    public function transferer(int $idSender, string $numeroReceiver, float $montant): array
+    {
+        if ($montant <= 0) {
+            return ['success' => false, 'message' => 'Le montant doit être positif.'];
+        }
+
+        $comptes  = model(CompteModel::class);
+        $sender   = $comptes->find($idSender);
+        $receiver = $comptes->where('numero', $numeroReceiver)->first();
+
+        if ($sender === null) {
+            return ['success' => false, 'message' => 'Compte introuvable.'];
+        }
+
+        if ($receiver === null) {
+            return ['success' => false, 'message' => 'Le numéro destinataire est introuvable.'];
+        }
+
+        if ((int) $receiver['id'] === $idSender) {
+            return ['success' => false, 'message' => 'Impossible de transférer vers son propre compte.'];
+        }
+
+        $idType = model(TypeMouvementModel::class)->idParLibelle('Envoi');
+        $frais  = model(FraisModel::class)->fraisPour($idType, $montant);
+        $total  = $montant + $frais;
+
+        if ($sender['solde'] < $total) {
+            return ['success' => false, 'message' => 'Solde insuffisant (montant + frais de ' . number_format($frais, 0, ',', ' ') . ' Ar).'];
+        }
+
+        $this->db->transStart();
+
+        $this->insert([
+            'idTypeMouvement' => $idType,
+            'idSender'        => $idSender,
+            'idReceiver'      => $receiver['id'],
+            'montant'         => $montant,
+            'frais'           => $frais,
+        ]);
+
+        $comptes->update($idSender, ['solde' => $sender['solde'] - $total]);
+        $comptes->update($receiver['id'], ['solde' => $receiver['solde'] + $montant]);
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return ['success' => false, 'message' => 'Erreur lors du transfert.'];
+        }
+
+        return ['success' => true, 'message' => 'Transfert de ' . number_format($montant, 0, ',', ' ') . ' Ar effectué vers ' . $numeroReceiver . '.'];
+    }
 }
