@@ -1,9 +1,26 @@
 <?= $this->extend('layout/main') ?>
 
 <?= $this->section('title') ?>Tarifs<?= $this->endSection() ?>
-<?= $this->section('subtitle') ?>Frais par type d'opération — l'historique des tarifs est conservé grâce à la date<?= $this->endSection() ?>
+<?= $this->section('subtitle') ?>Chaque opérateur a sa propre grille — l'historique des tarifs est conservé grâce à la date<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+
+<div class="app-card">
+    <form method="get" action="<?= site_url('tarifs') ?>" class="filter-form">
+        <div class="form-group">
+            <label for="operateur">Filtrer par opérateur</label>
+            <select id="operateur" name="operateur" onchange="this.form.submit()">
+                <option value="">Tous les opérateurs</option>
+                <?php foreach ($operateurs as $op) : ?>
+                    <option value="<?= $op['id'] ?>" <?= $idOperateur === (int) $op['id'] ? 'selected' : '' ?>>
+                        <?= esc($op['nom']) ?>
+                    </option>
+                <?php endforeach ?>
+            </select>
+        </div>
+        <noscript><button type="submit" class="btn btn-sm">Filtrer</button></noscript>
+    </form>
+</div>
 
 <div class="app-grid-2">
     <div class="app-card">
@@ -12,6 +29,7 @@
             <table class="app-table">
                 <thead>
                     <tr>
+                        <th>Opérateur</th>
                         <th>Type d'opération</th>
                         <th class="text-right">Tranche (Ar)</th>
                         <th class="text-right">Frais (Ar)</th>
@@ -21,10 +39,11 @@
                 </thead>
                 <tbody>
                 <?php if ($tarifs === []) : ?>
-                    <tr><td colspan="5" class="muted">Aucun tarif enregistré.</td></tr>
+                    <tr><td colspan="6" class="muted">Aucun tarif enregistré.</td></tr>
                 <?php endif ?>
                 <?php foreach ($tarifs as $t) : ?>
                     <tr>
+                        <td><strong><?= esc($t['nomOperateur']) ?></strong></td>
                         <td><span class="badge badge-operateur"><?= esc($t['libelleType']) ?></span></td>
                         <td class="text-right">
                             <?= number_format((float) $t['minMontant'], 0, ',', ' ') ?>
@@ -65,6 +84,18 @@
 
         <form method="post" action="<?= site_url('tarifs') ?>">
             <?= csrf_field() ?>
+            <div class="form-group">
+                <label for="idOperateur">Opérateur</label>
+                <select id="idOperateur" name="idOperateur" required>
+                    <option value="">— Choisir —</option>
+                    <?php foreach ($operateurs as $op) : ?>
+                        <option value="<?= $op['id'] ?>"
+                            <?= (old('idOperateur') ?? $idOperateur) == $op['id'] ? 'selected' : '' ?>>
+                            <?= esc($op['nom']) ?>
+                        </option>
+                    <?php endforeach ?>
+                </select>
+            </div>
             <div class="form-group">
                 <label for="idTypeMouvement">Type d'opération</label>
                 <select id="idTypeMouvement" name="idTypeMouvement" required>

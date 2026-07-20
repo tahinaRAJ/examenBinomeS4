@@ -290,8 +290,9 @@ Le dépôt est le cas le plus simple :
 
 ```php
 $idType = model(TypeMouvementModel::class)->idParLibelle('Retrait');
-$frais  = model(FraisModel::class)->fraisPour($idType, $montant);
-$total  = $montant + $frais;
+// Tarif de l'opérateur du titulaire du compte : chaque opérateur a sa grille
+$frais = model(FraisModel::class)->fraisPour($idType, $montant, (int) $compte['idOperateur']);
+$total = $montant + $frais;
 
 if ($compte['solde'] < $total) {
     return ['success' => false, 'message' => 'Solde insuffisant (montant + frais de ' . ... . ' Ar).'];
@@ -305,6 +306,11 @@ Deux différences avec le dépôt :
    tranche du montant (voir `frais-fige.md`).
 2. **Le solde doit couvrir montant + frais**, pas seulement le montant.
    Le contrôle porte bien sur `$total`.
+
+⚠️ **Chaque opérateur a sa propre grille tarifaire**, d'où le 3ᵉ argument
+`$compte['idOperateur']`. Pour un retrait, c'est l'opérateur du titulaire du
+compte qui s'applique, puisque c'est lui qui est débité. Un retrait de
+5 000 Ar coûte ainsi 200 Ar chez Telma, 250 chez Orange et 150 chez Airtel.
 
 Écritures : `idSender = $idCompte`, `idReceiver = null`, et
 `solde - ($montant + $frais)`.
@@ -339,6 +345,29 @@ $comptes->update($receiver['id'],['solde' => $receiver['solde'] + $montant]); //
 supportés **uniquement par l'émetteur**. La différence (`$frais`) est
 justement le **gain de l'opérateur**, celui qu'on totalise dans le dashboard
 de la partie 1.
+
+### Quel opérateur tarife un transfert ?
+
+C'est une conséquence directe du point précédent : puisque l'émetteur paie,
+c'est **la grille de l'opérateur de l'émetteur** qui s'applique.
+
+```php
+$idType = model(TypeMouvementModel::class)->idParLibelle('Envoi');
+// Tarif de l'opérateur de l'ÉMETTEUR : c'est lui qui paie les frais
+$frais = model(FraisModel::class)->fraisPour($idType, $montant, (int) $sender['idOperateur']);
+```
+
+Un transfert **Telma → Orange** applique donc le tarif **Telma**, même si le
+destinataire est chez Orange. Vérifié sur un envoi de 6 000 Ar :
+
+| Émetteur | Destinataire | Frais appliqué |
+|---|---|---|
+| Telma | Orange | 150 Ar (tarif Telma) |
+| Orange | Telma | 80 Ar (tarif Orange) |
+| Airtel | Telma | 120 Ar (tarif Airtel) |
+
+C'est cohérent avec le sens métier : le frais est le gain que l'opérateur
+réalise sur **son propre client**.
 
 ---
 
@@ -661,10 +690,25 @@ Le transfert a appliqué un frais de **150** et non 100 : c'est le tarif entré
 en vigueur le 15/07 dans `base.sql`. Cela confirme que la grille datée et le
 frais figé de la partie 1 fonctionnent bien avec les opérations client.
 
+### Tarifs par opérateur — vérifié
+
+Un **retrait de 5 000 Ar** par un client de chaque opérateur donne bien trois
+frais différents, conformes à chaque grille :
+
+| Client | Opérateur | Solde avant → après | Frais |
+|---|---|---|---|
+| Rakoto Jean | Telma | 150 000 → 144 800 | **200 Ar** |
+| Rasoa Marie | Orange | 82 000 → 76 750 | **250 Ar** |
+| Rabe Paul | Airtel | 41 000 → 35 850 | **150 Ar** |
+
+Et un **envoi de 6 000 Ar** applique bien le tarif de l'émetteur, y compris
+vers un autre opérateur (150 / 80 / 120 — voir le tableau de la section 3.5).
+
 ### Un point à connaître
 
-`FraisModel::fraisPour()` retourne **0** quand le montant ne tombe dans
-aucune tranche. Un retrait de 999 999 Ar (au-dessus de la tranche maximale
-200 000) est donc sans frais. Ce n'est pas un bug du code client, mais une
-conséquence de la grille : pour l'éviter, ajouter une tranche haute dans
-`frais` (par exemple `200001` → `99999999`).
+`FraisModel::fraisPour()` retourne **0** quand aucune tranche ne correspond :
+montant au-dessus de la tranche maximale (un retrait de 999 999 Ar est donc
+sans frais), **ou opérateur n'ayant pas de grille pour ce type**. Ce n'est
+pas un bug du code client mais une conséquence des données : pour l'éviter,
+ajouter une tranche haute (`200001` → `99999999`) à la grille de **chaque**
+opérateur, et penser à créer une grille dès qu'on ajoute un opérateur.

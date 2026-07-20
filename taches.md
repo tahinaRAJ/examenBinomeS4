@@ -30,6 +30,20 @@
     - [x] listes des comptes avec une page détail
     - [x] filtre par opérateur (+ tous les opérateurs)
 
+### Échanges entre opérateurs (Ayman)
+- [x] Configuration des préfixes valable pour les autres opérateurs
+    - [x] reconnaissance de l'opérateur d'un numéro par son préfixe
+    - [x] contrôle à la création d'un compte (un 032… ne peut pas être Telma)
+- [x] Configuration % de commission pour les transferts vers les autres opérateurs
+    - [x] taux par opérateur (écran Opérateurs)
+    - [x] commission prélevée en plus, au taux de l'opérateur d'arrivée
+    - [x] commission figée dans le mouvement (colonne séparée des frais)
+- [x] Situation gain : séparer opérateur et autres opérateurs
+    - [x] frais internes / frais sortants / commissions reçues
+- [x] Situation des montants à envoyer à chaque opérateur
+    - [x] tableau de compensation (à verser / à recevoir / net)
+    - [x] page de détail des mouvements échangés
+
 ### Partie Client (Tahina)
 - [x] logique d'Authentification
 - [x] logique de mouvement

@@ -149,3 +149,68 @@
 - [x] Mise à jour de `partie2-cote-client.md` : nouvelle organisation des
       routes, explication de la régression et de la règle à suivre quand on
       change une route, navigation entre les deux espaces — **4 min**
+
+## Tarifs propres à chaque opérateur
+
+> Avant, la grille `frais` était commune à tous les opérateurs. Désormais
+> chaque opérateur fixe ses propres tarifs.
+
+- [x] `base.sql` : colonne `idOperateur` dans `frais` + clé étrangère vers
+      `operateurs`, et grille de test pour les 3 opérateurs (19 tranches :
+      Telma plus cher sur l'envoi, Orange sur le retrait, Airtel moins cher)
+      — **6 min**
+- [x] `FraisModel` : `fraisPour()` prend un `$idOperateur` **obligatoire**
+      (3ᵉ argument, sans valeur par défaut, pour forcer tous les appelants à
+      le préciser) ; `listeAvecType()` joint `operateurs` et accepte un
+      filtre ; `idOperateur` ajouté aux champs et à la validation — **5 min**
+- [x] `MouvementModel` : les 2 appels passent l'opérateur du **payeur** —
+      le titulaire pour `retirer()`, l'**émetteur** pour `transferer()`
+      — **3 min**
+- [x] Controller `Tarifs` + vues : filtre par opérateur sur la liste (même
+      principe que le dashboard), colonne « Opérateur » dans le tableau,
+      sélecteur dans les formulaires d'ajout et de modification ; le filtre
+      actif pré-remplit l'opérateur du formulaire d'ajout — **7 min**
+- [x] Vérification : retrait de 5 000 Ar → 200 (Telma) / 250 (Orange) /
+      150 (Airtel) ; envoi de 6 000 Ar entre opérateurs différents → tarif de
+      l'émetteur (150 / 80 / 120) ; le tarif daté Telma du 15/07 fonctionne
+      toujours par-dessus ; CRUD complet des tarifs, filtre exact (19/7/6/6),
+      dashboard cohérent, 0 violation de clé étrangère — **8 min**
+- [x] Documentation : `frais-fige.md` réécrit autour des 3 mécanismes
+      (opérateur / date / frais figé), sections `FraisModel` et `Tarifs` de
+      `partie1`, sections `retirer()` et `transferer()` de `partie2`,
+      mémo `tables` — **9 min**
+
+## Échanges entre opérateurs (partie 3)
+
+> Voir `partie3-inter-operateurs.md` pour l'explication complète du code.
+
+- [x] `base.sql` : `operateurs.pourcentageCommission` + `mouvement.commission`
+      (deux colonnes séparées car frais et commission vont à deux opérateurs
+      différents), et **recalcul complet des 11 mouvements de test** avec le
+      frais de la grille de leur émetteur et la commission du destinataire
+      — **8 min**
+- [x] **Préfixes fonctionnels** : `PrefixeModel::operateurPourNumero()` (tri
+      par longueur décroissante pour gérer les préfixes qui se chevauchent) et
+      `numeroAppartientA()`. Utilisés à la création/modification d'un compte :
+      un numéro 032… ne peut plus être rattaché à Telma — **6 min**
+- [x] **Commission** : `commissionPour()` dans `MouvementModel` (0 si transfert
+      interne, sinon % de l'opérateur d'arrivée), `transferer()` débite
+      `montant + frais + commission` et crédite le montant exact ; message
+      d'erreur et de succès enrichis — **7 min**
+- [x] **Écran Opérateurs** (`/operateurs`) : configuration du % par opérateur,
+      avec le nombre de préfixes / tarifs / comptes et un ⚠ si la grille
+      tarifaire est vide — **6 min**
+- [x] **Point 3 — séparation des gains** : `gainsDetailles()` avec des
+      `SUM(CASE WHEN…)` (une seule lecture de table pour trois totaux) ;
+      section dédiée sur le dashboard, affichée uniquement quand un opérateur
+      précis est sélectionné — **7 min**
+- [x] **Point 4 — compensation** : `situationCompensation()` et
+      `detailsCompensation()`, controller `Compensation`, pages liste +
+      détail. Le montant dû = `montant + commission` (jamais les frais)
+      — **9 min**
+- [x] Routes + liens de navigation (Opérateurs, Compensation) — **2 min**
+- [x] Vérification : les 3 cas de préfixe, transfert inter-opérateurs
+      (émetteur −10 300 / destinataire +10 000 pile, frais et commission
+      stockés séparément), transfert interne (commission 0), gains détaillés
+      et compensation croisés avec le SQL, intégrité et logs — **9 min**
+- [x] Documentation `partie3-inter-operateurs.md` + mémo `tables` — **10 min**

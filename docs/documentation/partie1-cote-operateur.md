@@ -91,8 +91,8 @@ retourne toutes les lignes (comme `findAll()` mais utilisable après un
   `idOperateur` = à quel opérateur appartient le numéro du client).
 - **typeMouvement** — Dépôt / Retrait / Envoi, avec `estTarifable` (soumis à
   frais ou non).
-- **frais** — la grille tarifaire, historisée par `dateFrais` (voir
-  `frais-fige.md`).
+- **frais** — la grille tarifaire, **propre à chaque opérateur**
+  (`idOperateur`) et historisée par `dateFrais` (voir `frais-fige.md`).
 - **mouvement** — chaque opération, avec `frais` = le frais **figé** au
   moment de l'opération (jamais recalculé).
 
@@ -162,25 +162,39 @@ l'écran des tarifs, car Dépôt (`estTarifable = 0`) n'a pas de grille.
 
 ### 2.4 `FraisModel.php` — la grille tarifaire
 
+> **Important : chaque opérateur a sa propre grille tarifaire.** La table
+> `frais` porte un `idOperateur`, et le tarif appliqué à un mouvement est
+> celui de l'opérateur **du compte qui paie** (voir `frais-fige.md`).
+
 ```php
-public function listeAvecType(): array
+public function listeAvecType(?int $idOperateur = null): array
 {
-    return $this->select('frais.*, typeMouvement.libelle AS libelleType')
+    $requete = $this->select('frais.*, typeMouvement.libelle AS libelleType, operateurs.nom AS nomOperateur')
         ->join('typeMouvement', 'typeMouvement.id = frais.idTypeMouvement')
+        ->join('operateurs', 'operateurs.id = frais.idOperateur');
+
+    if ($idOperateur !== null) {
+        $requete->where('frais.idOperateur', $idOperateur);
+    }
+
+    return $requete->orderBy('operateurs.nom')
         ->orderBy('frais.dateFrais', 'DESC')
         ->orderBy('frais.id', 'DESC')
         ->findAll();
 }
 ```
-Liste tous les tarifs, du plus récent au plus ancien (double tri : par date,
-puis par id pour départager deux lignes insérées le même jour).
+Liste les tarifs groupés par opérateur, puis du plus récent au plus ancien
+(le tri par `id` départage deux lignes insérées le même jour). Le paramètre
+`$idOperateur` alimente le filtre de l'écran Tarifs — `null` = tous les
+opérateurs, exactement le même principe que le filtre du dashboard.
 
 ```php
-public function fraisPour(int $idTypeMouvement, float $montant, ?string $date = null): float
+public function fraisPour(int $idTypeMouvement, float $montant, int $idOperateur, ?string $date = null): float
 {
     $date ??= date('Y-m-d H:i:s');   // si $date est null, on prend "maintenant"
 
-    $tranche = $this->where('idTypeMouvement', $idTypeMouvement)
+    $tranche = $this->where('idOperateur', $idOperateur)
+        ->where('idTypeMouvement', $idTypeMouvement)
         ->where('minMontant <=', $montant)
         ->where('maxMontant >=', $montant)
         ->where('dateFrais <=', $date)
@@ -191,12 +205,17 @@ public function fraisPour(int $idTypeMouvement, float $montant, ?string $date = 
     return $tranche !== null ? (float) $tranche['montantFrais'] : 0.0;
 }
 ```
-C'est la méthode qui retrouve **le tarif en vigueur à une date donnée** :
-parmi toutes les lignes dont la tranche contient le montant ET dont
-`dateFrais` est passée, on prend la plus récente. C'est ce qui permet à la
-grille de changer sans casser l'historique (voir `frais-fige.md`). Elle
-n'est pas encore appelée par un controller (il n'y a pas encore d'écran pour
-saisir un mouvement) mais sera le point d'entrée le jour où on ajoutera « Faire un dépôt / retrait / envoi ».
+C'est la méthode qui retrouve **le tarif en vigueur pour un opérateur à une
+date donnée** : parmi les lignes de cet opérateur dont la tranche contient le
+montant ET dont `dateFrais` est passée, on prend la plus récente. Deux
+mécanismes se superposent donc — la grille par opérateur et son historique.
+
+`$idOperateur` est **obligatoire** (pas de valeur par défaut) : depuis que
+chaque opérateur a ses tarifs, un frais sans opérateur n'aurait pas de sens.
+Le compilateur force ainsi tous les appelants à préciser lequel.
+
+Elle est appelée par `MouvementModel::retirer()` et `::transferer()` de la
+partie client, avec l'opérateur du payeur (voir `partie2-cote-client.md`).
 
 ### 2.5 `CompteModel.php` — comptes clients
 
@@ -428,13 +447,35 @@ message de succès. **Ce patron est identique dans `Tarifs::store()` et
 
 ### 3.2 `Tarifs.php`
 
-Même structure que `Prefixes`, avec une particularité : la date d'entrée en
-vigueur du tarif est optionnelle.
+Même structure que `Prefixes`, avec deux particularités : chaque tarif
+appartient à un **opérateur**, et sa date d'entrée en vigueur est
+optionnelle.
+
+`index()` reprend le principe du filtre du dashboard :
+
+```php
+public function index(): string
+{
+    $idOperateur = $this->idOperateurFiltre();   // ?operateur=ID, null si absent
+
+    return view('tarifs/index', [
+        'tarifs'      => model(FraisModel::class)->listeAvecType($idOperateur),
+        'types'       => model(TypeMouvementModel::class)->typesTarifables(),
+        'operateurs'  => model(OperateurModel::class)->orderBy('nom')->findAll(),
+        'idOperateur' => $idOperateur,
+    ]);
+}
+```
+
+`$operateurs` sert à la fois au menu déroulant du filtre et à celui du
+formulaire d'ajout. `$idOperateur` est renvoyé à la vue pour garder l'option
+sélectionnée **et** pré-remplir l'opérateur du formulaire — quand on filtre
+sur Orange, le tarif qu'on ajoute vise Orange par défaut.
 
 ```php
 private function donneesDuFormulaire(): array
 {
-    $donnees = $this->request->getPost(['idTypeMouvement', 'minMontant', 'maxMontant', 'montantFrais']);
+    $donnees = $this->request->getPost(['idOperateur', 'idTypeMouvement', 'minMontant', 'maxMontant', 'montantFrais']);
 
     $date = $this->request->getPost('dateFrais');
     if ($date !== null && $date !== '') {

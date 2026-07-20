@@ -49,6 +49,76 @@
     </div>
 </div>
 
+<?php if ($gainsDetailles !== null) : ?>
+    <!-- Point 3 : d'où viennent les gains — interne vs autres opérateurs -->
+    <div class="app-card">
+        <div class="card-header-row">
+            <h2>Situation des gains : chez nous / avec les autres opérateurs</h2>
+            <a class="btn btn-sm" href="<?= site_url('compensation?operateur=' . $idOperateur) ?>">Voir la compensation →</a>
+        </div>
+
+        <div class="table-scroll">
+            <table class="app-table">
+                <thead>
+                    <tr>
+                        <th>Origine du gain</th>
+                        <th>Qui paie</th>
+                        <th class="text-right">Montant (Ar)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Frais sur mouvements internes</strong>
+                            <div class="muted">dépôts, retraits et envois restés chez nous</div></td>
+                        <td class="muted">nos propres clients</td>
+                        <td class="text-right amount-gain"><?= number_format($gainsDetailles['fraisInternes'], 0, ',', ' ') ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Frais sur envois vers d'autres opérateurs</strong>
+                            <div class="muted">nos clients envoient à l'extérieur</div></td>
+                        <td class="muted">nos propres clients</td>
+                        <td class="text-right amount-gain"><?= number_format($gainsDetailles['fraisSortants'], 0, ',', ' ') ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Commissions reçues des autres opérateurs</strong>
+                            <div class="muted">argent entrant chez nous depuis l'extérieur</div></td>
+                        <td class="muted">les autres opérateurs</td>
+                        <td class="text-right amount-gain"><?= number_format($gainsDetailles['commissionsRecues'], 0, ',', ' ') ?></td>
+                    </tr>
+                    <tr style="border-top: 2px solid var(--border);">
+                        <td><strong>Total des gains</strong></td>
+                        <td></td>
+                        <td class="text-right"><strong><?= number_format($gainsDetailles['total'], 0, ',', ' ') ?></strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="stats-grid" style="margin-top: 20px;">
+            <div class="stat-card">
+                <div class="stat-label">Gains internes</div>
+                <div class="stat-value"><?= number_format($gainsDetailles['totalInterne'], 0, ',', ' ') ?> Ar</div>
+                <div class="stat-change">activité entre nos clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Gains avec les autres opérateurs</div>
+                <div class="stat-value"><?= number_format($gainsDetailles['totalAutres'], 0, ',', ' ') ?> Ar</div>
+                <div class="stat-change">frais sortants + commissions reçues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Commissions versées</div>
+                <div class="stat-value amount-loss"><?= number_format($gainsDetailles['commissionsVersees'], 0, ',', ' ') ?> Ar</div>
+                <div class="stat-change">payées par nos clients aux autres</div>
+            </div>
+        </div>
+
+        <p class="muted" style="margin-top: 12px;">
+            💡 Les <strong>frais</strong> restent toujours chez l'opérateur d'origine ;
+            la <strong>commission</strong> va à l'opérateur qui reçoit l'argent.
+        </p>
+    </div>
+<?php endif ?>
+
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-label">Comptes clients</div>

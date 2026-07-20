@@ -3,15 +3,20 @@
 namespace App\Controllers;
 
 use App\Models\FraisModel;
+use App\Models\OperateurModel;
 use App\Models\TypeMouvementModel;
 
 class Tarifs extends BaseController
 {
     public function index(): string
     {
+        $idOperateur = $this->idOperateurFiltre();
+
         return view('tarifs/index', [
-            'tarifs' => model(FraisModel::class)->listeAvecType(),
-            'types'  => model(TypeMouvementModel::class)->typesTarifables(),
+            'tarifs'      => model(FraisModel::class)->listeAvecType($idOperateur),
+            'types'       => model(TypeMouvementModel::class)->typesTarifables(),
+            'operateurs'  => model(OperateurModel::class)->orderBy('nom')->findAll(),
+            'idOperateur' => $idOperateur,
         ]);
     }
 
@@ -35,8 +40,9 @@ class Tarifs extends BaseController
         }
 
         return view('tarifs/edit', [
-            'tarif' => $tarif,
-            'types' => model(TypeMouvementModel::class)->typesTarifables(),
+            'tarif'      => $tarif,
+            'types'      => model(TypeMouvementModel::class)->typesTarifables(),
+            'operateurs' => model(OperateurModel::class)->orderBy('nom')->findAll(),
         ]);
     }
 
@@ -68,7 +74,7 @@ class Tarifs extends BaseController
      */
     private function donneesDuFormulaire(): array
     {
-        $donnees = $this->request->getPost(['idTypeMouvement', 'minMontant', 'maxMontant', 'montantFrais']);
+        $donnees = $this->request->getPost(['idOperateur', 'idTypeMouvement', 'minMontant', 'maxMontant', 'montantFrais']);
 
         $date = $this->request->getPost('dateFrais');
         if ($date !== null && $date !== '') {
@@ -77,5 +83,16 @@ class Tarifs extends BaseController
         }
 
         return $donnees;
+    }
+
+    /**
+     * Lit le filtre ?operateur=ID de la liste des tarifs.
+     * Retourne null si absent/vide => "Tous les opérateurs".
+     */
+    private function idOperateurFiltre(): ?int
+    {
+        $valeur = $this->request->getGet('operateur');
+
+        return ($valeur === null || $valeur === '') ? null : (int) $valeur;
     }
 }

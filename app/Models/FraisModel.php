@@ -9,9 +9,10 @@ class FraisModel extends Model
     protected $table         = 'frais';
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
-    protected $allowedFields = ['idTypeMouvement', 'minMontant', 'maxMontant', 'montantFrais', 'dateFrais'];
+    protected $allowedFields = ['idOperateur', 'idTypeMouvement', 'minMontant', 'maxMontant', 'montantFrais', 'dateFrais'];
 
     protected $validationRules = [
+        'idOperateur'     => 'required|is_natural_no_zero',
         'idTypeMouvement' => 'required|is_natural_no_zero',
         'minMontant'      => 'required|decimal|greater_than_equal_to[0]',
         'maxMontant'      => 'required|decimal|greater_than_equal_to[0]',
@@ -19,6 +20,7 @@ class FraisModel extends Model
     ];
 
     protected $validationMessages = [
+        'idOperateur'     => ['required' => 'L\'opérateur est obligatoire.'],
         'idTypeMouvement' => ['required' => 'Le type d\'opération est obligatoire.'],
         'minMontant'      => ['required' => 'Le montant minimum est obligatoire.', 'decimal' => 'Montant minimum invalide.'],
         'maxMontant'      => ['required' => 'Le montant maximum est obligatoire.', 'decimal' => 'Montant maximum invalide.'],
@@ -26,26 +28,40 @@ class FraisModel extends Model
     ];
 
     /**
-     * Liste des tarifs avec le libellé du type, du plus récent au plus ancien.
+     * Liste des tarifs avec le libellé du type et le nom de l'opérateur.
+     * $idOperateur permet de n'afficher que la grille d'un opérateur
+     * (null = tous les opérateurs).
      */
-    public function listeAvecType(): array
+    public function listeAvecType(?int $idOperateur = null): array
     {
-        return $this->select('frais.*, typeMouvement.libelle AS libelleType')
+        $requete = $this->select('frais.*, typeMouvement.libelle AS libelleType, operateurs.nom AS nomOperateur')
             ->join('typeMouvement', 'typeMouvement.id = frais.idTypeMouvement')
+            ->join('operateurs', 'operateurs.id = frais.idOperateur');
+
+        if ($idOperateur !== null) {
+            $requete->where('frais.idOperateur', $idOperateur);
+        }
+
+        return $requete->orderBy('operateurs.nom')
             ->orderBy('frais.dateFrais', 'DESC')
             ->orderBy('frais.id', 'DESC')
             ->findAll();
     }
 
     /**
-     * Tarif en vigueur pour un type et un montant à une date donnée :
-     * la ligne la plus récente dont dateFrais <= date.
+     * Tarif en vigueur pour un opérateur, un type et un montant à une date
+     * donnée : la ligne la plus récente dont dateFrais <= date.
+     *
+     * Chaque opérateur ayant sa propre grille, $idOperateur est obligatoire :
+     * c'est l'opérateur du compte qui paie les frais (le titulaire pour un
+     * retrait, l'émetteur pour un envoi).
      */
-    public function fraisPour(int $idTypeMouvement, float $montant, ?string $date = null): float
+    public function fraisPour(int $idTypeMouvement, float $montant, int $idOperateur, ?string $date = null): float
     {
         $date ??= date('Y-m-d H:i:s');
 
-        $tranche = $this->where('idTypeMouvement', $idTypeMouvement)
+        $tranche = $this->where('idOperateur', $idOperateur)
+            ->where('idTypeMouvement', $idTypeMouvement)
             ->where('minMontant <=', $montant)
             ->where('maxMontant >=', $montant)
             ->where('dateFrais <=', $date)

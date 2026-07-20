@@ -22,6 +22,9 @@ class Dashboard extends BaseController
             'statsParType'    => $mouvements->statsParType($idOperateur),
             'statsComptes'    => model(CompteModel::class)->stats($idOperateur),
             'comptes'         => model(CompteModel::class)->listeAvecOperateur($idOperateur),
+            // Séparation interne / autres opérateurs : n'a de sens que pour
+            // un opérateur précis, pas pour « tous les opérateurs ».
+            'gainsDetailles'  => $idOperateur === null ? null : $mouvements->gainsDetailles($idOperateur),
         ]);
     }
 

@@ -17,6 +17,16 @@
     <form method="post" action="<?= site_url('tarifs/' . $tarif['id']) ?>">
         <?= csrf_field() ?>
         <div class="form-group">
+            <label for="idOperateur">Opérateur</label>
+            <select id="idOperateur" name="idOperateur" required>
+                <?php foreach ($operateurs as $op) : ?>
+                    <option value="<?= $op['id'] ?>" <?= old('idOperateur', $tarif['idOperateur']) == $op['id'] ? 'selected' : '' ?>>
+                        <?= esc($op['nom']) ?>
+                    </option>
+                <?php endforeach ?>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="idTypeMouvement">Type d'opération</label>
             <select id="idTypeMouvement" name="idTypeMouvement" required>
                 <?php foreach ($types as $type) : ?>

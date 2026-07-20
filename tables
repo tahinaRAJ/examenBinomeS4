@@ -2,6 +2,7 @@ OPERATEURS
 ----------
 id
 nom
+pourcentageCommission   (% pris sur l'argent entrant d'un autre opérateur)
 
 PREFIXES
 ---------
@@ -29,6 +30,7 @@ estTarifable
 FRAIS
 ------
 id
+idOperateur        (chaque opérateur a sa propre grille)
 idTypeMouvement
 minMontant
 maxMontant
@@ -42,5 +44,6 @@ idTypeMouvement
 idSender           (NULL si dépôt)
 idReceiver         (NULL si retrait)
 montant
-frais
+frais              (gardé par l'opérateur d'ORIGINE)
+commission         (gardée par l'opérateur d'ARRIVÉE, si inter-opérateurs)
 dateMouvement

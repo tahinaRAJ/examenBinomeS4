@@ -72,6 +72,23 @@
                     </svg>
                     Tarifs
                 </a>
+                <a href="<?= site_url('operateurs') ?>" class="nav-item <?= url_is('operateurs*') ? 'active' : '' ?>">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                    </svg>
+                    Opérateurs
+                </a>
+                <a href="<?= site_url('compensation') ?>" class="nav-item <?= url_is('compensation*') ? 'active' : '' ?>">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="17 1 21 5 17 9"/>
+                        <path d="M3 11V9a4 4 0 014-4h14"/>
+                        <polyline points="7 23 3 19 7 15"/>
+                        <path d="M21 13v2a4 4 0 01-4 4H3"/>
+                    </svg>
+                    Compensation
+                </a>
             </nav>
 
             <div class="sidebar-footer">

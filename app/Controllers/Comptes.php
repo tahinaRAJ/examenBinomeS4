@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\CompteModel;
 use App\Models\MouvementModel;
 use App\Models\OperateurModel;
+use App\Models\PrefixeModel;
 
 class Comptes extends BaseController
 {
@@ -43,6 +44,11 @@ class Comptes extends BaseController
         $comptes = model(CompteModel::class);
         $donnees = $this->donneesDuFormulaire();
 
+        $erreurPrefixe = $this->verifierPrefixe($donnees);
+        if ($erreurPrefixe !== null) {
+            return redirect()->to('comptes/create')->withInput()->with('errors', [$erreurPrefixe]);
+        }
+
         if (! $comptes->insert($donnees)) {
             return redirect()->to('comptes/create')->withInput()->with('errors', $comptes->errors());
         }
@@ -72,7 +78,14 @@ class Comptes extends BaseController
             return redirect()->to('comptes')->with('error', 'Compte introuvable.');
         }
 
-        if (! $comptes->update($id, $this->donneesDuFormulaire())) {
+        $donnees = $this->donneesDuFormulaire();
+
+        $erreurPrefixe = $this->verifierPrefixe($donnees);
+        if ($erreurPrefixe !== null) {
+            return redirect()->back()->withInput()->with('errors', [$erreurPrefixe]);
+        }
+
+        if (! $comptes->update($id, $donnees)) {
             return redirect()->back()->withInput()->with('errors', $comptes->errors());
         }
 
@@ -94,6 +107,33 @@ class Comptes extends BaseController
         $comptes->changerActivation($id, ! ((int) $compte['estActif'] === 1));
 
         return redirect()->back()->with('success', 'Compte ' . ((int) $compte['estActif'] === 1 ? 'désactivé' : 'activé') . '.');
+    }
+
+    /**
+     * Le numéro doit correspondre à un préfixe de l'opérateur choisi
+     * (un 032… est un numéro Orange, il ne peut pas être rattaché à Telma).
+     * Retourne le message d'erreur, ou null si tout va bien.
+     */
+    private function verifierPrefixe(array $donnees): ?string
+    {
+        $numero      = (string) ($donnees['numero'] ?? '');
+        $idOperateur = (int) ($donnees['idOperateur'] ?? 0);
+
+        if ($numero === '' || $idOperateur === 0) {
+            return null;   // laissé aux règles de validation du Model
+        }
+
+        $prefixes = model(PrefixeModel::class);
+
+        if ($prefixes->numeroAppartientA($numero, $idOperateur)) {
+            return null;
+        }
+
+        $trouve = $prefixes->operateurPourNumero($numero);
+
+        return $trouve === null
+            ? 'Le préfixe de ce numéro n\'est enregistré pour aucun opérateur.'
+            : 'Ce numéro appartient à ' . $trouve['nomOperateur'] . ' (préfixe ' . $trouve['prefixe'] . ').';
     }
 
     private function donneesDuFormulaire(): array

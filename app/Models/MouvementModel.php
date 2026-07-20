@@ -9,7 +9,7 @@ class MouvementModel extends Model
     protected $table         = 'mouvement';
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
-    protected $allowedFields = ['idTypeMouvement', 'idSender', 'idReceiver', 'montant', 'frais', 'dateMouvement'];
+    protected $allowedFields = ['idTypeMouvement', 'idSender', 'idReceiver', 'montant', 'frais', 'commission', 'dateMouvement'];
 
     /**
      * Restreint la requête en cours aux mouvements qui touchent un compte
@@ -197,8 +197,9 @@ class MouvementModel extends Model
         }
 
         $idType = model(TypeMouvementModel::class)->idParLibelle('Retrait');
-        $frais  = model(FraisModel::class)->fraisPour($idType, $montant);
-        $total  = $montant + $frais;
+        // Tarif de l'opérateur du titulaire du compte : chaque opérateur a sa grille
+        $frais = model(FraisModel::class)->fraisPour($idType, $montant, (int) $compte['idOperateur']);
+        $total = $montant + $frais;
 
         if ($compte['solde'] < $total) {
             return ['success' => false, 'message' => 'Solde insuffisant (montant + frais de ' . number_format($frais, 0, ',', ' ') . ' Ar).'];
@@ -252,11 +253,26 @@ class MouvementModel extends Model
         }
 
         $idType = model(TypeMouvementModel::class)->idParLibelle('Envoi');
-        $frais  = model(FraisModel::class)->fraisPour($idType, $montant);
-        $total  = $montant + $frais;
+
+        // Frais fixe : tarif de l'opérateur de l'ÉMETTEUR, qui le garde.
+        $frais = model(FraisModel::class)->fraisPour($idType, $montant, (int) $sender['idOperateur']);
+
+        // Commission : % de l'opérateur du DESTINATAIRE, qui la garde.
+        // Uniquement si les deux opérateurs sont différents (pas sur un
+        // transfert interne).
+        $commission = $this->commissionPour($sender, $receiver, $montant);
+
+        // L'émetteur paie tout : montant + frais + commission.
+        // Le destinataire reçoit le montant exact.
+        $total = $montant + $frais + $commission;
 
         if ($sender['solde'] < $total) {
-            return ['success' => false, 'message' => 'Solde insuffisant (montant + frais de ' . number_format($frais, 0, ',', ' ') . ' Ar).'];
+            $detail = 'frais de ' . number_format($frais, 0, ',', ' ') . ' Ar';
+            if ($commission > 0) {
+                $detail .= ' + commission de ' . number_format($commission, 0, ',', ' ') . ' Ar';
+            }
+
+            return ['success' => false, 'message' => 'Solde insuffisant (montant + ' . $detail . ').'];
         }
 
         $this->db->transStart();
@@ -267,6 +283,7 @@ class MouvementModel extends Model
             'idReceiver'      => $receiver['id'],
             'montant'         => $montant,
             'frais'           => $frais,
+            'commission'      => $commission,
         ]);
 
         $comptes->update($idSender, ['solde' => $sender['solde'] - $total]);
@@ -278,6 +295,182 @@ class MouvementModel extends Model
             return ['success' => false, 'message' => 'Erreur lors du transfert.'];
         }
 
-        return ['success' => true, 'message' => 'Transfert de ' . number_format($montant, 0, ',', ' ') . ' Ar effectué vers ' . $numeroReceiver . '.'];
+        $message = 'Transfert de ' . number_format($montant, 0, ',', ' ') . ' Ar effectué vers ' . $numeroReceiver . '.';
+        if ($commission > 0) {
+            $message .= ' Commission inter-opérateurs : ' . number_format($commission, 0, ',', ' ') . ' Ar.';
+        }
+
+        return ['success' => true, 'message' => $message];
+    }
+
+    /**
+     * Commission d'interconnexion sur un transfert.
+     *
+     * Elle n'existe que si l'émetteur et le destinataire sont chez deux
+     * opérateurs différents. Le taux appliqué est celui de l'opérateur
+     * d'ARRIVÉE, puisque c'est lui qui l'encaisse.
+     */
+    private function commissionPour(array $sender, array $receiver, float $montant): float
+    {
+        if ((int) $sender['idOperateur'] === (int) $receiver['idOperateur']) {
+            return 0.0;   // transfert interne : pas de commission
+        }
+
+        $operateurArrivee = model(OperateurModel::class)->find($receiver['idOperateur']);
+
+        if ($operateurArrivee === null) {
+            return 0.0;
+        }
+
+        return round($montant * (float) $operateurArrivee['pourcentageCommission'] / 100, 2);
+    }
+
+    // ==================================================================
+    // Situation des gains : interne / autres opérateurs
+    // ==================================================================
+
+    /**
+     * Décompose les gains d'un opérateur en trois sources distinctes.
+     *
+     * Un opérateur gagne de deux façons :
+     *   - les FRAIS qu'il prélève sur les mouvements de ses propres clients
+     *     (en tant qu'opérateur d'origine) ;
+     *   - les COMMISSIONS qu'il prélève sur l'argent qui entre chez lui
+     *     depuis un autre opérateur (en tant qu'opérateur d'arrivée).
+     *
+     * On sépare en plus les frais internes (mouvement resté chez lui) des
+     * frais sur envois sortants, comme demandé.
+     */
+    public function gainsDetailles(int $idOperateur): array
+    {
+        $sql = "
+            SELECT
+              -- frais sur mouvements 100 % internes (dépôt/retrait, ou envoi entre ses clients)
+              COALESCE(SUM(CASE
+                WHEN s.idOperateur = :op: AND (m.idReceiver IS NULL OR r.idOperateur = :op:)
+                THEN m.frais ELSE 0 END), 0) AS fraisInternes,
+
+              -- frais sur envois de ses clients vers un AUTRE opérateur
+              COALESCE(SUM(CASE
+                WHEN s.idOperateur = :op: AND r.idOperateur IS NOT NULL AND r.idOperateur <> :op:
+                THEN m.frais ELSE 0 END), 0) AS fraisSortants,
+
+              -- commissions encaissées sur l'argent entrant d'un autre opérateur
+              COALESCE(SUM(CASE
+                WHEN r.idOperateur = :op: AND s.idOperateur IS NOT NULL AND s.idOperateur <> :op:
+                THEN m.commission ELSE 0 END), 0) AS commissionsRecues,
+
+              -- pour information : commissions payées à d'autres opérateurs
+              COALESCE(SUM(CASE
+                WHEN s.idOperateur = :op: AND r.idOperateur IS NOT NULL AND r.idOperateur <> :op:
+                THEN m.commission ELSE 0 END), 0) AS commissionsVersees
+            FROM mouvement m
+            LEFT JOIN comptes s ON s.id = m.idSender
+            LEFT JOIN comptes r ON r.id = m.idReceiver
+        ";
+
+        $ligne = $this->db->query($sql, ['op' => $idOperateur])->getRowArray();
+
+        $fraisInternes     = (float) $ligne['fraisInternes'];
+        $fraisSortants     = (float) $ligne['fraisSortants'];
+        $commissionsRecues = (float) $ligne['commissionsRecues'];
+
+        return [
+            'fraisInternes'      => $fraisInternes,
+            'fraisSortants'      => $fraisSortants,
+            'commissionsRecues'  => $commissionsRecues,
+            'commissionsVersees' => (float) $ligne['commissionsVersees'],
+            // ce que l'opérateur gagne vraiment
+            'totalInterne'       => $fraisInternes,
+            'totalAutres'        => $fraisSortants + $commissionsRecues,
+            'total'              => $fraisInternes + $fraisSortants + $commissionsRecues,
+        ];
+    }
+
+    // ==================================================================
+    // Situation des montants à envoyer à chaque opérateur
+    // ==================================================================
+
+    /**
+     * Ce que l'opérateur doit à chaque autre opérateur, et inversement.
+     *
+     * Quand un client de A envoie de l'argent à un client de B :
+     *   - A a encaissé montant + frais + commission de son client ;
+     *   - A garde ses frais ;
+     *   - B doit créditer son client (montant) et encaisser sa commission.
+     * Donc A doit reverser à B : montant + commission.
+     *
+     * Retourne une ligne par autre opérateur, avec le solde net.
+     */
+    public function situationCompensation(int $idOperateur): array
+    {
+        $sql = "
+            SELECT
+              autre.id  AS idAutre,
+              autre.nom AS nomAutre,
+
+              -- ce que NOUS devons à l'autre (nos clients ont envoyé chez lui)
+              COALESCE(SUM(CASE WHEN s.idOperateur = :op: AND r.idOperateur = autre.id
+                                THEN m.montant + m.commission ELSE 0 END), 0) AS aVerser,
+              COALESCE(SUM(CASE WHEN s.idOperateur = :op: AND r.idOperateur = autre.id
+                                THEN 1 ELSE 0 END), 0) AS nbEnvoyes,
+
+              -- ce que l'autre nous doit (ses clients ont envoyé chez nous)
+              COALESCE(SUM(CASE WHEN s.idOperateur = autre.id AND r.idOperateur = :op:
+                                THEN m.montant + m.commission ELSE 0 END), 0) AS aRecevoir,
+              COALESCE(SUM(CASE WHEN s.idOperateur = autre.id AND r.idOperateur = :op:
+                                THEN 1 ELSE 0 END), 0) AS nbRecus
+            FROM operateurs autre
+            LEFT JOIN mouvement m ON 1 = 1
+            LEFT JOIN comptes s ON s.id = m.idSender
+            LEFT JOIN comptes r ON r.id = m.idReceiver
+            WHERE autre.id <> :op:
+            GROUP BY autre.id
+            ORDER BY autre.nom
+        ";
+
+        $lignes = $this->db->query($sql, ['op' => $idOperateur])->getResultArray();
+
+        return array_map(static function (array $l): array {
+            $aVerser   = (float) $l['aVerser'];
+            $aRecevoir = (float) $l['aRecevoir'];
+
+            return [
+                'idAutre'   => (int) $l['idAutre'],
+                'nomAutre'  => $l['nomAutre'],
+                'aVerser'   => $aVerser,
+                'aRecevoir' => $aRecevoir,
+                'nbEnvoyes' => (int) $l['nbEnvoyes'],
+                'nbRecus'   => (int) $l['nbRecus'],
+                // > 0 : nous devons de l'argent ; < 0 : on nous en doit
+                'net'       => $aVerser - $aRecevoir,
+            ];
+        }, $lignes);
+    }
+
+    /**
+     * Détail des mouvements échangés avec un autre opérateur
+     * (les deux sens), pour justifier le montant de la compensation.
+     */
+    public function detailsCompensation(int $idOperateur, int $idAutre): array
+    {
+        return $this->select('mouvement.*, typeMouvement.libelle AS libelleType')
+            ->select('sender.numero AS numeroSender, receiver.numero AS numeroReceiver')
+            ->select('sender.idOperateur AS opSender, receiver.idOperateur AS opReceiver')
+            ->join('typeMouvement', 'typeMouvement.id = mouvement.idTypeMouvement')
+            ->join('comptes AS sender', 'sender.id = mouvement.idSender')
+            ->join('comptes AS receiver', 'receiver.id = mouvement.idReceiver')
+            ->groupStart()
+                ->groupStart()
+                    ->where('sender.idOperateur', $idOperateur)
+                    ->where('receiver.idOperateur', $idAutre)
+                ->groupEnd()
+                ->orGroupStart()
+                    ->where('sender.idOperateur', $idAutre)
+                    ->where('receiver.idOperateur', $idOperateur)
+                ->groupEnd()
+            ->groupEnd()
+            ->orderBy('mouvement.dateMouvement', 'DESC')
+            ->findAll();
     }
 }

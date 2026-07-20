@@ -10,6 +10,16 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/dashboard', 'Dashboard::index');
 $routes->get('dashboard/gains/(:segment)', 'Dashboard::gains/$1');
 
+// Situation des montants à envoyer à chaque opérateur (compensation)
+$routes->get('compensation', 'Compensation::index');
+$routes->get('compensation/(:num)/details', 'Compensation::details/$1');
+
+// Opérateurs et leur commission d'interconnexion
+$routes->get('operateurs', 'Operateurs::index');
+$routes->post('operateurs', 'Operateurs::store');
+$routes->get('operateurs/(:num)/edit', 'Operateurs::edit/$1');
+$routes->post('operateurs/(:num)', 'Operateurs::update/$1');
+
 // CRUD des préfixes
 $routes->get('prefixes', 'Prefixes::index');
 $routes->post('prefixes', 'Prefixes::store');
