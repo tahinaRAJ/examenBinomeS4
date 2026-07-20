@@ -32,3 +32,23 @@ $routes->get('comptes/(:num)', 'Comptes::show/$1');
 $routes->get('comptes/(:num)/edit', 'Comptes::edit/$1');
 $routes->post('comptes/(:num)', 'Comptes::update/$1');
 $routes->post('comptes/(:num)/toggle', 'Comptes::toggle/$1');
+
+
+// Authentification 
+$routes->get('login', 'AuthController::showLoginForm');
+$routes->post('login', 'AuthController::login');
+$routes->post('logout', 'AuthController::logout');
+
+// Espace client — identité (ClientController)
+$routes->get('profil', 'ClientController::profile');
+$routes->get('historique', 'ClientController::historique');
+
+// Espace client — opérations (MouvementController)
+$routes->get('client/depot', 'MouvementController::depotForm');
+$routes->post('client/depot', 'MouvementController::depot');
+
+$routes->get('client/retrait', 'MouvementController::retraitForm');
+$routes->post('client/retrait', 'MouvementController::retrait');
+
+$routes->get('client/transfert', 'MouvementController::transfertForm');
+$routes->post('client/transfert', 'MouvementController::transfert');
