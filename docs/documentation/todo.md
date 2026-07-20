@@ -78,3 +78,35 @@
 - [x] `partie1-cote-operateur.md` : explication complète, fichier par
       fichier et méthode par méthode, de tous les Models/Controllers/Vues/
       Routes déjà écrits, pour pouvoir relire et modifier le code — **10 min**
+
+## Partie client (Tahina)
+
+> Interface client par-dessus la base existante : authentification, dépôt,
+> retrait, transfert, consultation du profil et de l'historique.
+
+### Models (toute la logique base de données)
+
+- [x] `CompteModel` : authentification (`verifierIdentifiants()`), fonctions
+      d'accès aux informations (`getNom()`, `getSolde()`, `getNum()`)
+- [x] `MouvementModel` : fonctions d'opération (`deposer()`, `retirer()`,
+      `transferer()`)
+
+### Controllers + Routes
+
+- [x] Contrôleur d'authentification du client (connexion, déconnexion)
+- [x] Contrôleur client (profil, historique des mouvements)
+- [x] Controleur mouvement (depot, retrait, transfert)
+- [x] `Routes.php` : routes de connexion + routes protégées de l'espace
+      client
+
+### Vues
+
+- [ ] Connexion : formulaire numéro de compte + mot de passe
+- [ ] Profil : informations du client (nom, numéro, solde)
+- [ ] Opérations : formulaire de dépôt / retrait / transfert
+- [ ] Historique : liste des mouvements du compte
+
+### Vérification
+
+- [ ] Test des 3 opérations (dépôt, retrait, transfert) et de leurs cas
+      d'erreur (solde insuffisant, destinataire introuvable, etc.)
