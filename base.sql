@@ -73,6 +73,8 @@ CREATE TABLE frais (
 
     montantFrais REAL NOT NULL,
 
+    dateFrais DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY(idTypeMouvement)
         REFERENCES typeMouvement(id)
 );

@@ -32,6 +32,7 @@ idTypeMouvement
 minMontant
 maxMontant
 montantFrais
+dateFrais          (date d'entrée en vigueur du tarif)
 
 MOUVEMENT
 ----------
