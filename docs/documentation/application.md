@@ -139,6 +139,32 @@ sqlite3 writable/base.sqlite < base.sql
 php spark serve        # puis http://localhost:8080
 ```
 
+⚠️ Le port doit correspondre au `baseURL` de `app/Config/App.php`
+(`http://localhost:8080/`). Si 8080 est occupé, `spark serve` bascule
+silencieusement sur 8081/8082 : la page s'affiche alors **sans style**, car
+le CSS et le JS sont générés vers 8080. Deux solutions :
+
+- libérer 8080 (`pkill -f "spark serve"`) puis relancer ;
+- ou servir sur un autre port **et** changer `baseURL` en conséquence
+  (`php spark serve --port 9000` + `baseURL = 'http://localhost:9000/'`).
+
+## Police hébergée localement
+
+La police *Instrument Sans* est servie depuis `public/assets/fonts/`
+(fichiers `.woff2`) via `public/assets/css/fonts.css`, au lieu de Google
+Fonts.
+
+**Pourquoi :** le `<link>` vers `fonts.googleapis.com` est bloquant pour
+l'affichage. Le navigateur attendait le CSS distant (~1 s) puis le fichier
+de police (~0,6 s) avant de peindre la page, soit ~1,6 s d'écran vide —
+alors que la page HTML elle-même est générée en 13 ms. En local, ces
+fichiers répondent en moins d'1 ms, et l'application fonctionne **sans
+connexion internet**.
+
+Pour changer de police : télécharger les `.woff2` dans
+`public/assets/fonts/` et adapter les `@font-face` de
+`public/assets/css/fonts.css` (les `src:` pointent en `../fonts/`).
+
 ## En cas de modification
 
 - **Nouvelle requête BDD** → nouvelle méthode dans le Model concerné.

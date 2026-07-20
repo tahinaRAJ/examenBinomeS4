@@ -10,9 +10,9 @@
             document.documentElement.setAttribute('data-theme', savedTheme);
         })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Police hébergée localement (pas de requête externe : chargement instantané
+         et l'application fonctionne sans connexion internet) -->
+    <link rel="stylesheet" href="<?= base_url('assets/css/fonts.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/templatemo-crypto-style.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/templatemo-crypto-dashboard.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/templatemo-crypto-pages.css') ?>">
