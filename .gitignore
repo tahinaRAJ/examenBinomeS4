@@ -22,6 +22,9 @@ writable/uploads/*
 # Dépendances
 vendor/
 
+# Documentation et template de référence (non versionnés)
+docs/
+
 # IDE / OS
 .vscode/
 .idea/
