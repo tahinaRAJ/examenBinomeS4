@@ -128,6 +128,15 @@ CREATE TABLE mouvement (
         REFERENCES comptes(id)
 );
 
+CREATE TABLE epargne (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idCompte INTEGER NOT NULL,
+    montant INTEGER,
+    pourcentage INTEGER,
+    FOREIGN KEY(idCompte)
+        REFERENCES comptes(id)
+);
+
 
 -- ============ DONNÉES DE TEST ============
 
@@ -136,6 +145,7 @@ CREATE TABLE mouvement (
 INSERT INTO operateurs (nom, pourcentageCommission) VALUES ('Telma',  2.0);   -- id 1 (notre opérateur)
 INSERT INTO operateurs (nom, pourcentageCommission) VALUES ('Orange', 1.5);   -- id 2
 INSERT INTO operateurs (nom, pourcentageCommission) VALUES ('Airtel', 2.5);   -- id 3
+
 
 -- Préfixes
 INSERT INTO prefixes (prefixe, idOperateur) VALUES ('034', 1);
@@ -189,6 +199,15 @@ INSERT INTO comptes (numero, nom, solde, estActif, idOperateur, created_at, upda
 INSERT INTO comptes (numero, nom, solde, estActif, idOperateur, created_at, updated_at) VALUES ('0379990011', 'Ravao Lala',        12000, 1, 2, '2026-07-01 16:45:00', '2026-07-01 16:45:00'); -- Orange
 INSERT INTO comptes (numero, nom, solde, estActif, idOperateur, created_at, updated_at) VALUES ('0345556677', 'Rakotoson Naly',        0, 0, 1, '2026-07-03 11:20:00', '2026-07-10 09:00:00'); -- Telma
 
+
+INSERT INTO epargne (idCompte) VALUES ('1');
+INSERT INTO epargne (idCompte) VALUES ('2');
+INSERT INTO epargne (idCompte) VALUES ('3');
+INSERT INTO epargne (idCompte) VALUES ('4');
+INSERT INTO epargne (idCompte) VALUES ('5');
+INSERT INTO epargne (idCompte) VALUES ('6');
+
+
 -- Mouvements. Deux valeurs figées à la date du mouvement :
 --   frais      = tarif fixe de l'opérateur de l'ÉMETTEUR (il le garde)
 --   commission = % de l'opérateur du DESTINATAIRE (il le garde),
@@ -216,3 +235,4 @@ INSERT INTO mouvement (idTypeMouvement, idSender, idReceiver, montant, frais, co
 -- 2026-07-19
 INSERT INTO mouvement (idTypeMouvement, idSender, idReceiver, montant, frais, commission, dateMouvement) VALUES (3, 4,    2,    100000, 800,  1500, '2026-07-19 08:55:00'); -- Telma->Orange : frais Telma 800 + comm Orange 1,5% = 1500
 INSERT INTO mouvement (idTypeMouvement, idSender, idReceiver, montant, frais, commission, dateMouvement) VALUES (2, 1,    NULL, 5000,   200,  0,    '2026-07-19 14:20:00'); -- retrait Rakoto (Telma) : 0-10000 = 200
+

@@ -256,20 +256,28 @@ class MouvementModel extends Model
         }
 
         $comptes = model(CompteModel::class);
+        $epargne = model(EpargneModel::class);
+
+
+
         $this->db->transStart();
 
         foreach ($simulation['destinataires'] as $destination) {
+            $montantEpargne = ($destination['montantRecu']*($epargne.getPourcentage($destination['id']))/100);
             $this->insert([
                 'idTypeMouvement' => $simulation['idType'],
                 'idSender'        => $idSender,
                 'idReceiver'      => $destination['id'],
-                'montant'         => $destination['montantRecu'],
+                'montant'         => ($destination['montantRecu']-$montantEpargne),
                 'frais'           => $destination['frais'],
                 'commission'      => $destination['commission'],
             ]);
 
             $comptes->update($destination['id'], [
                 'solde' => $destination['solde'] + $destination['montantRecu'],
+            ]);
+            $epargne->update($destination['id'], [
+                'montant' => $destination['montant'] + $montantEpargne,
             ]);
         }
 

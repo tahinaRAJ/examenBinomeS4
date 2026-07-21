@@ -48,4 +48,6 @@ class OperateurModel extends Model
 
         return $operateur === null ? 0.0 : (float) $operateur['pourcentageCommission'];
     }
+
+    
 }

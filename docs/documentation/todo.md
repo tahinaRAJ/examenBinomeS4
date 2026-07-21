@@ -260,3 +260,13 @@
       d'envoi totaux, commissions et total débité
 - [x] Transaction atomique : un numéro invalide annule tout le transfert
 - [x] Contrôle des numéros vides, dupliqués, inactifs et du compte émetteur
+
+
+
+## Aléa
+
+- [] créer la table epargne (id , idcompte, pourcentage, montant)
+- [] créer un model et un controller (avec la fonction insertEpargne)
+- [] modifier la fonction transferMultiple :
+            - apres le transfert , on retire un pourcentage de l'argent recu
+            - on l'additionne au montant de l'épargne
