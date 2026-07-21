@@ -58,9 +58,10 @@ class FraisModel extends Model
      */
     public function fraisPour(int $idTypeMouvement, float $montant, int $idOperateur, ?string $date = null): float
     {
-        $operateurModel = model(OperateurModel::class);
-        $promotion = $operateurModel->getPromotionPour($idOperateur) / 100;
         $date ??= date('Y-m-d H:i:s');
+
+        $promotion      = model(OperateurModel::class)->getPromotionPour($idOperateur);
+        $multiplicateur = max(0.0, (100 - $promotion) / 100);
 
         $tranche = $this->where('idOperateur', $idOperateur)
             ->where('idTypeMouvement', $idTypeMouvement)
@@ -71,6 +72,8 @@ class FraisModel extends Model
             ->orderBy('id', 'DESC')
             ->first();
 
-        return $tranche !== null ? (float) $tranche['montantFrais'] * $promotion : 0.0;
+        return $tranche !== null
+            ? round((float) $tranche['montantFrais'] * $multiplicateur, 2)
+            : 0.0;
     }
 }

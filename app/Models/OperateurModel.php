@@ -49,9 +49,15 @@ class OperateurModel extends Model
         return $operateur === null ? 0.0 : (float) $operateur['pourcentageCommission'];
     }
 
-    public function getPromotionPour (int $id) {
-        return $this->select('(SELECT pourcentagePromotion FROM promotionTransfert WHERE idOperateur = opertateurId) AS pourcentagePromotion')
-        ->where('opertateurId', $id)
-        ->findAll();
+    public function getPromotionPour(int $id): float
+    {
+        $ligne = $this->db->table('promotionTransfert')
+            ->select('pourcentagePromotion')
+            ->where('idOperateur', $id)
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        return $ligne === null ? 0.0 : (float) $ligne['pourcentagePromotion'];
     }
 }
