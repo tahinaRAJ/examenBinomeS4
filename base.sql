@@ -15,6 +15,15 @@ CREATE TABLE operateurs (
 );
 
 
+CREATE TABLE promotionTransfert (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pourcentagePromotion INTEGER NOT NULL,
+    idOperateur INTEGER NOT NULL,
+
+    FOREIGN KEY(idOperateur)
+        REFERENCES operateurs(id)
+);
+
 -- PREFIXES
 
 
@@ -136,6 +145,11 @@ CREATE TABLE mouvement (
 INSERT INTO operateurs (nom, pourcentageCommission) VALUES ('Telma',  2.0);   -- id 1 (notre opérateur)
 INSERT INTO operateurs (nom, pourcentageCommission) VALUES ('Orange', 1.5);   -- id 2
 INSERT INTO operateurs (nom, pourcentageCommission) VALUES ('Airtel', 2.5);   -- id 3
+
+INSERT INTO promotionTransfert (pourcentagePromotion, idOperateur) VALUES (50, 1); -- promotion de 50% pour Telma
+INSERT INTO promotionTransfert (pourcentagePromotion, idOperateur) VALUES (50, 2); -- promotion de 50% pour Orange
+INSERT INTO promotionTransfert (pourcentagePromotion, idOperateur) VALUES (50, 3); -- promotion de 50% pour Airtel
+
 
 -- Préfixes
 INSERT INTO prefixes (prefixe, idOperateur) VALUES ('034', 1);
